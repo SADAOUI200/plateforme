@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة إدارة الموظفين والمتابعة التفتيشية</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo & Tajawal) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS for Excel Reading/Writing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e293b;
+            --secondary: #0f766e;
+            --accent: #d97706;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white;
+            padding: 1.25rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand i {
+            font-size: 2rem;
+            color: #60a5fa;
+        }
+
+        .brand-text h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-text p {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 5px;
+            border-radius: var(--radius-md);
+        }
+
+        .nav-tab {
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            width: 95%;
+            margin: 1.5rem auto;
+            flex: 1;
+        }
+
+        /* Upload Section */
+        .upload-card {
+            background: var(--bg-card);
+            border: 2px dashed #cbd5e1;
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .upload-card:hover, .upload-card.dragover {
+            border-color: var(--primary-light);
+            background-color: #eff6ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-light);
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e1;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #15803d;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-right: 5px solid var(--primary);
+        }
+
+        .stat-card.alert { border-right-color: var(--danger); }
+        .stat-card.success { border-right-color: var(--success); }
+        .stat-card.info { border-right-color: var(--secondary); }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            background: #f1f5f9;
+            color: var(--primary);
+        }
+
+        .stat-card.alert .stat-icon { background: #fee2e2; color: var(--danger); }
+        .stat-card.success .stat-icon { background: #dcfce7; color: var(--success); }
+        .stat-card.info .stat-icon { background: #ccfbf1; color: var(--secondary); }
+
+        .stat-info h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .stat-info p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Main Content Views */
+        .view-panel {
+            display: none;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .view-panel.active {
+            display: block;
+        }
+
+        /* Controls / Filter Bar */
+        .controls-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            outline: none;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        select, input[type="date"] {
+            padding: 9px 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            outline: none;
+            font-size: 0.88rem;
+            background-color: white;
+            color: var(--text-main);
+        }
+
+        /* Table Styling */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 0.88rem;
+        }
+
+        thead {
+            background-color: #f1f5f9;
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Status Badge */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Pagination */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .pagination-btns {
+            display: flex;
+            gap: 5px;
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal / Window Component */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.75rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .close-btn:hover { opacity: 1; }
+
+        .modal-body {
+            padding: 1.75rem;
+        }
+
+        /* Modal Grid for Data */
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            border-right: 4px solid var(--primary);
+            padding-right: 10px;
+            margin: 1.25rem 0 0.8rem 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Edit Form Controls */
+        .edit-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #166534;
+        }
+
+        .form-group input {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #86efac;
+            outline: none;
+            font-weight: 600;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.75rem;
+            background: #f8fafc;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Inspector Assignment Section */
+        .assign-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .assign-grid { grid-template-columns: 1fr; }
+        }
+
+        .card-box {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+        }
+
+        .inspector-list {
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .inspector-item {
+            padding: 10px 14px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .inspector-item:hover, .inspector-item.selected {
+            background: #eff6ff;
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .tag {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #e2e8f0;
+            color: var(--text-muted);
+        }
+
+        /* Print styles */
+        @media print {
+            header, .nav-tabs, .upload-card, .controls-bar, .pagination-container, .btn, .no-print {
+                display: none !important;
+            }
+            body { background: white; color: black; }
+            .container { width: 100%; max-width: 100%; margin: 0; padding: 0; }
+            .view-panel { box-shadow: none; padding: 0; border: none; display: block !important; }
+            .table-responsive { border: none; overflow: visible; }
+            table { border: 1px solid #000; font-size: 10pt; }
+            th, td { border: 1px solid #000; padding: 6px; }
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+        }
+
+        .print-header { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <div class="brand-text">
+                <h1>منصة المتابعة التفتيشية وسجلات الموظفين</h1>
+                <p>مديرية التربية - نظام إدارة المقاطعات والزيارات الميدانية</p>
+            </div>
+        </div>
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('main-view')">
+                <i class="fa-solid fa-users"></i> سجل الموظفين
+            </button>
+            <button class="nav-tab" onclick="switchTab('reports-view')">
+                <i class="fa-solid fa-chart-pie"></i> بوابة التقارير والتفتيش
+                <span id="overdue-badge-count" class="badge badge-danger" style="display:none;">0</span>
+            </button>
+            <button class="nav-tab" onclick="switchTab('assign-view')">
+                <i class="fa-solid fa-sitemap"></i> إدارة المقاطعات والإسناد
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Upload Card -->
+        <div class="upload-card" id="drop-zone">
+            <input type="file" id="excel-file-input" class="file-input" accept=".xlsx, .xls">
+            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+            <h3>قم بسحب وإسقاط ملف إكسل الموظفين هنا أو اضغط للاختيار</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">
+                يدعم ملفات XLSX المعتمدة في قطاع التربية (يتم تلقائياً استثناء الموظفين البالغين للدرجة 12)
+            </p>
+            <div id="file-info" style="margin-top: 10px; font-weight: 700; color: var(--success); display: none;">
+                <i class="fa-solid fa-circle-check"></i> <span id="file-info-text">تم تحميل الملف بنجاح!</span>
+            </div>
+        </div>
+
+        <!-- Dashboard Stats -->
+        <div class="stats-grid" id="stats-container" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-user-group"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-total">0</h3>
+                    <p>الموظفون المؤهلون (دون الدرجة 12)</p>
+                </div>
+            </div>
+            <div class="stat-card alert">
+                <div class="stat-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-overdue">0</h3>
+                    <p>لم يزاروا منذ > سنتين</p>
+                </div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-visited">0</h3>
+                    <p>زيارات محينة (أقل من سنتين)</p>
+                </div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-icon"><i class="fa-solid fa-user-slash"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-excluded">0</h3>
+                    <p>مستثنون (بلغوا الدرجة 12)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Printable Document Title -->
+        <div class="print-header">
+            <h2 id="print-title">تقرير تفتيشي</h2>
+            <p id="print-subtitle">تاريخ الاستخراج: <span id="print-date"></span></p>
+        </div>
+
+        <!-- TAB 1: Main Employee Data Table -->
+        <div id="main-view" class="view-panel active">
+            <div class="controls-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-input" placeholder="بحث بالاسم، اللقب، الرقم الوظيفي، المؤسسة..." oninput="handleSearch()">
+                </div>
+                <div class="filter-group">
+                    <select id="filter-rank" onchange="applyFilters()">
+                        <option value="">جميع الرتب</option>
+                    </select>
+                    <select id="filter-subject" onchange="applyFilters()">
+                        <option value="">جميع المواد / التخصصات</option>
+                    </select>
+                    <select id="filter-school" onchange="applyFilters()">
+                        <option value="">جميع المؤسسات</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="resetFilters()">
+                        <i class="fa-solid fa-rotate"></i> إعادة ضبط
+                    </button>
+                    <button class="btn btn-success" onclick="exportUpdatedExcel()">
+                        <i class="fa-solid fa-file-excel"></i> تصدير البيانات المعدلة
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>اللقب والاسم</th>
+                            <th>الرتبة</th>
+                            <th>الدرجة</th>
+                            <th>المادة / التخصص</th>
+                            <th>المؤسسة</th>
+                            <th>تاريخ آخر زيارة</th>
+                            <th>النقطة الممنوحة</th>
+                            <th>حالة التفتيش</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employees-table-body">
+                        <tr>
+                            <td colspan="10" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                <i class="fa-solid fa-file-import" style="font-size: 2rem; margin-bottom: 10px; display:block;"></i>
+                                يرجى تحميل ملف إكسل الموظفين للبدء في عرض واستعراض البيانات
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-container">
+                <div class="pagination-info" id="pagination-info">عرض 0 إلى 0 من إجمالي 0 سجل</div>
+                <div class="pagination-btns" id="pagination-controls"></div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Inspection Reports Portal -->
+        <div id="reports-view" class="view-panel">
+            <div class="controls-bar">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <h3 style="font-size: 1.1rem; color: var(--primary);"><i class="fa-solid fa-triangle-exclamation" style="color:var(--danger)"></i> الموظفون المعنيون بالتفتيش (تجاوزوا سنتين)</h3>
+                </div>
+                <div class="filter-group">
+                    <select id="report-filter-inspector" onchange="filterReports()">
+                        <option value="">جميع المفتشين (المقاطعات)</option>
+                    </select>
+                    <select id="report-filter-subject" onchange="filterReports()">
+                        <option value="">تصفية حسب المادة / التخصص</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> طباعة التقرير
+                    </button>
+                    <button class="btn btn-success" onclick="exportReportToExcel()">
+                        <i class="fa-solid fa-file-excel"></i> تصدير التقرير الحالي
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px; padding: 10px 15px; background: #fef2f2; border-right: 4px solid var(--danger); border-radius: var(--radius-sm); font-size: 0.88rem; color: #991b1b;">
+                <strong>ملاحظة النظام:</strong> يتم احتساب التأخر بناءً على مقارنة <code>تاريخ آخر زيارة</code> للموظف مع تاريخ اليوم الحالي (أكثر من 730 يوم - سنتين كاملتين) مع استبعاد كل موظف بلغ الدرجة 12.
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الرقم الوظيفي</th>
+                            <th>اسم ولقب الموظف</th>
+                            <th>المؤسسة المستقبلة</th>
+                            <th>الرتبة</th>
+                            <th>الدرجة</th>
+                            <th>المادة / التخصص</th>
+                            <th>تاريخ آخر زيارة</th>
+                            <th>مدة التأخر</th>
+                            <th>المفتش المشرف (المقاطعة)</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reports-table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 3: Districts & Inspector Assignment -->
+        <div id="assign-view" class="view-panel">
+            <div style="margin-bottom: 1.5rem;">
+                <h2><i class="fa-solid fa-sitemap"></i> إدارة المقاطعات والتفتيش (إسناد المؤسسات)</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">يمكنك إضافة مفتشين وتخصيص المؤسسات والمواد المتواجدة بها لكل مفتش (المؤسسة الواحدة قد يشرف عليها أكثر من مفتش بحسب التخصص).</p>
+            </div>
+
+            <div class="assign-grid">
+                <!-- Inspector Management -->
+                <div class="card-box">
+                    <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--primary);"><i class="fa-solid fa-user-tie"></i> قائمة المفتشين</h3>
+                    
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom: 1rem;">
+                        <input type="text" id="new-inspector-name" placeholder="اسم المفتش الكامل..." style="width:100%;">
+                        <input type="text" id="new-inspector-spec" placeholder="تخصص المفتش (مثال: رياضيات، أمانة...)" style="width:100%;">
+                        <button class="btn btn-primary" onclick="addInspector()"><i class="fa-solid fa-plus"></i> إضافة مفتش جديد</button>
+                    </div>
+
+                    <div class="inspector-list" id="inspectors-container">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Assignment Details -->
+                <div class="card-box" id="assignment-details-box">
+                    <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--secondary);">
+                        <i class="fa-solid fa-building-circle-check"></i> إسناد المؤسسات والمواد للمفتش المحدد: <span id="selected-inspector-name" style="color:var(--primary); font-weight:800;">-</span>
+                    </h3>
+
+                    <div id="assign-form-container" style="display:none;">
+                        <div style="background:#f8fafc; padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-color); margin-bottom:1rem;">
+                            <label style="font-size:0.85rem; font-weight:700; display:block; margin-bottom:5px;">اختر المؤسسة للربط:</label>
+                            <select id="assign-school-select" style="width:100%; margin-bottom:10px;">
+                                <option value="">-- اختر مؤسسة --</option>
+                            </select>
+
+                            <label style="font-size:0.85rem; font-weight:700; display:block; margin-bottom:5px;">المادة/التخصص المشرَف عليه بهذه المؤسسة:</label>
+                            <select id="assign-subject-select" style="width:100%; margin-bottom:12px;">
+                                <option value="جميع التخصصات">جميع التخصصات المتاحة بالمؤسسة</option>
+                            </select>
+
+                            <button class="btn btn-success" style="width:100%; justify-content:center;" onclick="assignSchoolToInspector()">
+                                <i class="fa-solid fa-link"></i> تأكيد ربط المؤسسة بالمفتش
+                            </button>
+                        </div>
+
+                        <h4 style="font-size:0.9rem; margin-bottom:8px;">المؤسسات والمقاطعات المسندة حالياً لهذا المفتش:</h4>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>المؤسسة</th>
+                                        <th>التخصص/المادة</th>
+                                        <th>حذف الإسناد</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assigned-schools-table">
+                                    <!-- Populated JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="no-inspector-selected" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                        <i class="fa-solid fa-hand-pointer" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
+                        يرجى اختيار مفتش من القائمة الجانبية لإدارة مقاطعته وإسناد المؤسسات له.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal for Viewing & Editing Employee Details -->
+    <div class="modal-overlay" id="employee-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-id-card"></i> بطاقة معلومات الموظف المكملة</h2>
+                <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- Quick Inspector Actions Edit -->
+                <div class="edit-box">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-calendar-check"></i> تاريخ آخر زيارة تفتيشية:</label>
+                        <input type="date" id="modal-edit-date">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-star"></i> النقطة التربوية / الإدارية الممنوحة:</label>
+                        <input type="number" step="0.25" min="0" max="20" id="modal-edit-score" placeholder="مثال: 14.50">
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fa-solid fa-user"></i> المعلومات الشخصية</div>
+                <div class="info-grid">
+                    <div class="info-item"><span class="info-label">اللقب والاسم:</span><span class="info-value" id="m-fullname">-</span></div>
+                    <div class="info-item"><span class="info-label">الاسم باللاتينية:</span><span class="info-value" id="m-latin-name">-</span></div>
+                    <div class="info-item"><span class="info-label">الرقم الوظيفي:</span><span class="info-value" id="m-job-id">-</span></div>
+                    <div class="info-item"><span class="info-label">رقم التعريف الوطني (NIN):</span><span class="info-value" id="m-nin">-</span></div>
+                    <div class="info-item"><span class="info-label">تاريخ ومكان الازدياد:</span><span class="info-value" id="m-birth">-</span></div>
+                    <div class="info-item"><span class="info-label">الجنس / فصيلة الدم:</span><span class="info-value" id="m-gender-blood">-</span></div>
+                    <div class="info-item"><span class="info-label">العنوان الشخصي:</span><span class="info-value" id="m-address">-</span></div>
+                    <div class="info-item"><span class="info-label">الهاتف المحمول:</span><span class="info-value" id="m-phone">-</span></div>
+                </div>
+
+                <div class="section-title"><i class="fa-solid fa-briefcase"></i> المسار الإداري والمهني</div>
+                <div class="info-grid">
+                    <div class="info-item"><span class="info-label">الرتبة الحالية:</span><span class="info-value" id="m-rank">-</span></div>
+                    <div class="info-item"><span class="info-label">المادة / التخصص:</span><span class="info-value" id="m-subject">-</span></div>
+                    <div class="info-item"><span class="info-label">المؤسسة والبلدية:</span><span class="info-value" id="m-school">-</span></div>
+                    <div class="info-item"><span class="info-label">الوضعية الإدارية والدرجة:</span><span class="info-value" id="m-status-degree">-</span></div>
+                    <div class="info-item"><span class="info-label">تاريخ التوظيف:</span><span class="info-value" id="m-hire-date">-</span></div>
+                    <div class="info-item"><span class="info-label">تاريخ الترسيم:</span><span class="info-value" id="m-confirmation-date">-</span></div>
+                    <div class="info-item"><span class="info-label">تاريخ التعيين بالمؤسسة:</span><span class="info-value" id="m-school-assign-date">-</span></div>
+                    <div class="info-item"><span class="info-label">صفة التعيين:</span><span class="info-value" id="m-assign-type">-</span></div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveEmployeeChanges()"><i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // Global State
+        let rawEmployeesData = [];
+        let excludedEmployeesCount = 0;
+        let filteredEmployees = [];
+        let currentPage = 1;
+        const pageSize = 10;
+        let selectedEmployeeIndex = -1;
+
+        // Inspectors Data Structure: [{id, name, spec, assignments: [{school, subject}]}]
+        let inspectors = [
+            { id: 1, name: 'أحمد بن علي', spec: 'رياضيات', assignments: [] },
+            { id: 2, name: 'فاطمة الزهراء عثماني', spec: 'لغة عربية', assignments: [] }
+        ];
+        let activeInspectorId = null;
+
+        // System Date (Today)
+        const systemDate = new Date();
+
+        // DOM Loaded Init
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDragAndDrop();
+            renderInspectorsList();
+        });
+
+        // Tab Switcher
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+
+            if (tabId === 'reports-view') {
+                renderReportsPortal();
+            } else if (tabId === 'assign-view') {
+                populateAssignSelects();
+            }
+        }
+
+        // Drag & Drop File Setup
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('excel-file-input');
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileUpload(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+        }
+
+        // دالة استخراج وتوحيد قيمة الدرجة (العمود AI أو حقل الدرجة)
+        function getEmployeeDegree(item) {
+            // فحص مفاتيح الدرجة المحتملة
+            let val = item['الدرجة'] ?? item['درجة'] ?? item['Echelon'] ?? item['ECHELON'] ?? '';
+            
+            // في حال كانت الأسماء عبر ترميز الأعمدة AI
+            if (val === '' && item['AI'] !== undefined) {
+                val = item['AI'];
+            }
+
+            if (val === null || val === undefined) return '';
+            return String(val).trim();
+        }
+
+        // Process Uploaded Excel
+        function handleFileUpload(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Read as JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+                
+                excludedEmployeesCount = 0;
+                let validEmployees = [];
+                let rowCounter = 0;
+
+                jsonData.forEach((item) => {
+                    const degreeStr = getEmployeeDegree(item);
+                    const degreeNum = parseInt(degreeStr, 10);
+
+                    // استثناء كل موظف بلغ الدرجة 12
+                    if (degreeNum === 12 || degreeStr === '12') {
+                        excludedEmployeesCount++;
+                        return; // تجاوز هذا الموظف وعدم إدراجه في المنظومة
+                    }
+
+                    // Extract or normalize visit date and score
+                    let visitDate = item['تاريخ النقطة التربوية'] || item['تاريخ النقطة الادارية'] || '';
+                    if (visitDate instanceof Date) {
+                        visitDate = visitDate.toISOString().split('T')[0];
+                    } else if (typeof visitDate === 'string' && visitDate.includes('T')) {
+                        visitDate = visitDate.split('T')[0];
+                    }
+                    if (visitDate === '1970-01-01') visitDate = ''; // reset default null dates
+
+                    let score = item['النقطة التربوية'] || item['النقطة الادارية'] || '';
+
+                    validEmployees.push({
+                        _id: rowCounter++,
+                        ...item,
+                        'الدرجة': degreeStr, // توحيد حقل الدرجة
+                        'تاريخ النقطة التربوية': visitDate,
+                        'النقطة التربوية': score
+                    });
+                });
+
+                rawEmployeesData = validEmployees;
+                filteredEmployees = [...rawEmployeesData];
+                
+                // UI Feedback
+                const fileInfoElem = document.getElementById('file-info');
+                const fileInfoText = document.getElementById('file-info-text');
+                fileInfoElem.style.display = 'block';
+                fileInfoText.innerText = `تم تحميل الملف بنجاح! تم استيراد ${rawEmployeesData.length} موظفاً (واستثناء ${excludedEmployeesCount} موظفاً بلغوا الدرجة 12).`;
+                
+                document.getElementById('stats-container').style.display = 'grid';
+                
+                // Update Filters & Render
+                populateFilters();
+                updateDashboardStats();
+                currentPage = 1;
+                renderMainTable();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Filter Options Population
+        function populateFilters() {
+            const ranks = new Set();
+            const subjects = new Set();
+            const schools = new Set();
+
+            rawEmployeesData.forEach(emp => {
+                if (emp['الرتبة']) ranks.add(emp['الرتبة']);
+                if (emp['المادة']) subjects.add(emp['المادة']);
+                if (emp['المؤسسة']) schools.add(emp['المؤسسة']);
+            });
+
+            populateSelect('filter-rank', Array.from(ranks), 'جميع الرتب');
+            populateSelect('filter-subject', Array.from(subjects), 'جميع المواد / التخصصات');
+            populateSelect('filter-school', Array.from(schools), 'جميع المؤسسات');
+        }
+
+        function populateSelect(elemId, items, defaultText) {
+            const select = document.getElementById(elemId);
+            select.innerHTML = `<option value="">${defaultText}</option>`;
+            items.sort().forEach(item => {
+                select.innerHTML += `<option value="${item}">${item}</option>`;
+            });
+        }
+
+        // Apply Search & Filters
+        function applyFilters() {
+            const search = document.getElementById('search-input').value.toLowerCase().trim();
+            const rank = document.getElementById('filter-rank').value;
+            const subject = document.getElementById('filter-subject').value;
+            const school = document.getElementById('filter-school').value;
+
+            filteredEmployees = rawEmployeesData.filter(emp => {
+                const fullname = ((emp['اللقب'] || '') + ' ' + (emp['الاسم'] || '')).toLowerCase();
+                const jobId = String(emp['الرقم الوظيفي'] || '').toLowerCase();
+                const empSchool = String(emp['المؤسسة'] || '').toLowerCase();
+
+                const matchesSearch = !search || fullname.includes(search) || jobId.includes(search) || empSchool.includes(search);
+                const matchesRank = !rank || emp['الرتبة'] === rank;
+                const matchesSubject = !subject || emp['المادة'] === subject;
+                const matchesSchool = !school || emp['المؤسسة'] === school;
+
+                return matchesSearch && matchesRank && matchesSubject && matchesSchool;
+            });
+
+            currentPage = 1;
+            renderMainTable();
+        }
+
+        function handleSearch() {
+            applyFilters();
+        }
+
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('filter-rank').value = '';
+            document.getElementById('filter-subject').value = '';
+            document.getElementById('filter-school').value = '';
+            applyFilters();
+        }
+
+        // Check if inspection visit is overdue (> 2 years / 730 days)
+        function checkInspectionStatus(dateStr) {
+            if (!dateStr || dateStr === '1970-01-01') {
+                return { overdue: true, days: 'غير محدد', text: 'لم يزار مطلقاً', badge: 'badge-danger' };
+            }
+
+            const visitDate = new Date(dateStr);
+            if (isNaN(visitDate.getTime())) {
+                return { overdue: true, days: 'غير محدد', text: 'تاريخ غير صالح', badge: 'badge-danger' };
+            }
+
+            const diffTime = Math.abs(systemDate - visitDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const diffYears = (diffDays / 365).toFixed(1);
+
+            if (diffDays > 730) {
+                return { overdue: true, days: `${diffYears} سنة (${diffDays} يوم)`, text: 'متأخر (> سنتين)', badge: 'badge-danger' };
+            } else {
+                return { overdue: false, days: `${diffYears} سنة`, text: 'محيّن', badge: 'badge-success' };
+            }
+        }
+
+        // Render Main Data Table with 10 Records Pagination
+        function renderMainTable() {
+            const tbody = document.getElementById('employees-table-body');
+            tbody.innerHTML = '';
+
+            if (filteredEmployees.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem;">لا توجد نتائج مطابقة لخيارات البحث.</td></tr>`;
+                updatePaginationControls(0);
+                return;
+            }
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const pageData = filteredEmployees.slice(startIndex, startIndex + pageSize);
+
+            pageData.forEach((emp, index) => {
+                const globalIndex = startIndex + index + 1;
+                const status = checkInspectionStatus(emp['تاريخ النقطة التربوية']);
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${globalIndex}</strong></td>
+                    <td><strong>${emp['اللقب'] || ''} ${emp['الاسم'] || ''}</strong></td>
+                    <td>${emp['الرتبة'] || '-'}</td>
+                    <td><span class="tag" style="background:#f1f5f9; font-weight:700;">${emp['الدرجة'] !== '' ? emp['الدرجة'] : '-'}</span></td>
+                    <td><span class="tag">${emp['المادة'] || 'إداري / عام'}</span></td>
+                    <td>${emp['المؤسسة'] || '-'}</td>
+                    <td>${emp['تاريخ النقطة التربوية'] || '<span style="color:red">غير مسجل</span>'}</td>
+                    <td><strong style="color:var(--primary);">${emp['النقطة التربوية'] !== undefined ? emp['النقطة التربوية'] : '-'}</strong></td>
+                    <td><span class="badge ${status.badge}">${status.text}</span></td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding:4px 10px; font-size:0.78rem;" onclick="openEmployeeModal(${emp._id})">
+                            <i class="fa-solid fa-pen-to-square"></i> عرض وتعديل
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updatePaginationControls(filteredEmployees.length);
+        }
+
+        // Pagination Handler
+        function updatePaginationControls(totalItems) {
+            const totalPages = Math.ceil(totalItems / pageSize) || 1;
+            const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, totalItems);
+
+            document.getElementById('pagination-info').innerText = `عرض ${start} إلى ${end} من إجمالي ${totalItems} سجل`;
+
+            const controls = document.getElementById('pagination-controls');
+            controls.innerHTML = '';
+
+            // Previous Button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i> السابق';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderMainTable(); } };
+            controls.appendChild(prevBtn);
+
+            // Page numbers
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                pageBtn.innerText = i;
+                pageBtn.onclick = () => { currentPage = i; renderMainTable(); };
+                controls.appendChild(pageBtn);
+            }
+
+            // Next Button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.innerHTML = 'التالي <i class="fa-solid fa-chevron-left"></i>';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderMainTable(); } };
+            controls.appendChild(nextBtn);
+        }
+
+        // Update Dashboard Stats Card
+        function updateDashboardStats() {
+            const total = rawEmployeesData.length;
+            let overdueCount = 0;
+            const schools = new Set();
+
+            rawEmployeesData.forEach(emp => {
+                if (emp['المؤسسة']) schools.add(emp['المؤسسة']);
+                const status = checkInspectionStatus(emp['تاريخ النقطة التربوية']);
+                if (status.overdue) overdueCount++;
+            });
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-overdue').innerText = overdueCount;
+            document.getElementById('stat-visited').innerText = total - overdueCount;
+            document.getElementById('stat-excluded').innerText = excludedEmployeesCount;
+
+            // Update Header Overdue Counter
+            const badge = document.getElementById('overdue-badge-count');
+            if (overdueCount > 0) {
+                badge.innerText = overdueCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Modal Handling
+        function openEmployeeModal(empId) {
+            selectedEmployeeIndex = rawEmployeesData.findIndex(e => e._id === empId);
+            if (selectedEmployeeIndex === -1) return;
+
+            const emp = rawEmployeesData[selectedEmployeeIndex];
+
+            // Fill Form Values
+            document.getElementById('modal-edit-date').value = emp['تاريخ النقطة التربوية'] || '';
+            document.getElementById('modal-edit-score').value = emp['النقطة التربوية'] || '';
+
+            // Fill Info Displays
+            document.getElementById('m-fullname').innerText = `${emp['اللقب'] || ''} ${emp['الاسم'] || ''}`;
+            document.getElementById('m-latin-name').innerText = `${emp['Nom'] || ''} ${emp['Prenom'] || ''}`;
+            document.getElementById('m-job-id').innerText = emp['الرقم الوظيفي'] || '-';
+            document.getElementById('m-nin').innerText = emp['رقم التعريف الوطني'] || '-';
+            document.getElementById('m-birth').innerText = `${emp['تاريخ الازدياد'] || '-'} بـ ${emp['مكان الازدياد'] || '-'}`;
+            document.getElementById('m-gender-blood').innerText = `${emp['الجنس'] || '-'} | فصيلة الدم: ${emp['فصيلة الدم'] || '-'}`;
+            document.getElementById('m-address').innerText = emp['العنوان'] || '-';
+            document.getElementById('m-phone').innerText = emp['الهاتف المحمول'] || '-';
+
+            document.getElementById('m-rank').innerText = emp['الرتبة'] || '-';
+            document.getElementById('m-subject').innerText = emp['المادة'] || 'إداري / عام';
+            document.getElementById('m-school').innerText = `${emp['المؤسسة'] || '-'} (${emp['البلدية'] || '-'})`;
+            document.getElementById('m-status-degree').innerText = `${emp['الوضعية الادارية'] || '-'} - الدرجة: ${emp['الدرجة'] !== undefined ? emp['الدرجة'] : '-'}`;
+            document.getElementById('m-hire-date').innerText = emp['تاريخ التوظيف'] || '-';
+            document.getElementById('m-confirmation-date').innerText = emp['تاريخ الترسيم'] || '-';
+            document.getElementById('m-school-assign-date').innerText = emp['تاريخ التعيين في المؤسسة'] || '-';
+            document.getElementById('m-assign-type').innerText = emp['صفة التعيين'] || '-';
+
+            document.getElementById('employee-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('employee-modal').classList.remove('active');
+        }
+
+        // Save Edits from Modal
+        function saveEmployeeChanges() {
+            if (selectedEmployeeIndex === -1) return;
+
+            const newDate = document.getElementById('modal-edit-date').value;
+            const newScore = document.getElementById('modal-edit-score').value;
+
+            // Update Master Object
+            rawEmployeesData[selectedEmployeeIndex]['تاريخ النقطة التربوية'] = newDate;
+            rawEmployeesData[selectedEmployeeIndex]['تاريخ النقطة الادارية'] = newDate;
+            rawEmployeesData[selectedEmployeeIndex]['النقطة التربوية'] = newScore ? parseFloat(newScore) : '';
+            rawEmployeesData[selectedEmployeeIndex]['النقطة الادارية'] = newScore ? parseFloat(newScore) : '';
+
+            alert('تم حفظ البيانات والتعديلات بنجاح!');
+            closeModal();
+
+            updateDashboardStats();
+            applyFilters();
+        }
+
+        // Reports Portal Filtering & Generation
+        function renderReportsPortal() {
+            populateReportFilters();
+            filterReports();
+        }
+
+        function populateReportFilters() {
+            // Inspector Filter
+            const inspSelect = document.getElementById('report-filter-inspector');
+            inspSelect.innerHTML = `<option value="">جميع المفتشين (المقاطعات)</option>`;
+            inspectors.forEach(insp => {
+                inspSelect.innerHTML += `<option value="${insp.id}">${insp.name} (${insp.spec})</option>`;
+            });
+
+            // Subject Filter
+            const subjSelect = document.getElementById('report-filter-subject');
+            const subjects = new Set();
+            rawEmployeesData.forEach(e => { if (e['المادة']) subjects.add(e['المادة']); });
+            
+            subjSelect.innerHTML = `<option value="">تصفية حسب المادة / التخصص</option>`;
+            Array.from(subjects).sort().forEach(sub => {
+                subjSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+            });
+        }
+
+        function filterReports() {
+            const selectedInspId = document.getElementById('report-filter-inspector').value;
+            const selectedSubject = document.getElementById('report-filter-subject').value;
+
+            const tbody = document.getElementById('reports-table-body');
+            tbody.innerHTML = '';
+
+            let overdueEmployees = rawEmployeesData.filter(emp => {
+                const status = checkInspectionStatus(emp['تاريخ النقطة التربوية']);
+                return status.overdue;
+            });
+
+            // Filter by Subject
+            if (selectedSubject) {
+                overdueEmployees = overdueEmployees.filter(emp => emp['المادة'] === selectedSubject);
+            }
+
+            // Filter by Inspector Assignment
+            if (selectedInspId) {
+                const inspector = inspectors.find(i => i.id == selectedInspId);
+                if (inspector) {
+                    overdueEmployees = overdueEmployees.filter(emp => {
+                        return inspector.assignments.some(a => 
+                            a.school === emp['المؤسسة'] && (a.subject === 'جميع التخصصات' || a.subject === emp['المادة'])
+                        );
+                    });
+                }
+            }
+
+            if (overdueEmployees.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:2rem; color:var(--text-muted);">لا يوجد موظفون متأخرون عن التفتيش وفق المعايير المحددة.</td></tr>`;
+                return;
+            }
+
+            overdueEmployees.forEach((emp, index) => {
+                const status = checkInspectionStatus(emp['تاريخ النقطة التربوية']);
+                
+                // Find assigned inspector for this school/subject
+                const assignedInspectors = inspectors.filter(insp => 
+                    insp.assignments.some(a => a.school === emp['المؤسسة'] && (a.subject === 'جميع التخصصات' || a.subject === emp['المادة']))
+                ).map(i => i.name).join('، ') || '<span style="color:var(--text-muted)">غير مسند</span>';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${index + 1}</strong></td>
+                    <td>${emp['الرقم الوظيفي'] || '-'}</td>
+                    <td><strong>${emp['اللقب'] || ''} ${emp['الاسم'] || ''}</strong></td>
+                    <td>${emp['المؤسسة'] || '-'}</td>
+                    <td>${emp['الرتبة'] || '-'}</td>
+                    <td><span class="tag">${emp['الدرجة'] !== '' ? emp['الدرجة'] : '-'}</span></td>
+                    <td><span class="tag">${emp['المادة'] || 'إداري / عام'}</span></td>
+                    <td>${emp['تاريخ النقطة التربوية'] || 'غير مسجل'}</td>
+                    <td><span class="badge badge-danger">${status.days}</span></td>
+                    <td><strong style="color:var(--primary);">${assignedInspectors}</strong></td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding:3px 8px; font-size:0.75rem;" onclick="openEmployeeModal(${emp._id})">
+                            <i class="fa-solid fa-pen"></i> تعديل
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Inspector Assignment Management Section
+        function renderInspectorsList() {
+            const container = document.getElementById('inspectors-container');
+            container.innerHTML = '';
+
+            inspectors.forEach(insp => {
+                const div = document.createElement('div');
+                div.className = `inspector-item ${insp.id === activeInspectorId ? 'selected' : ''}`;
+                div.onclick = () => selectInspector(insp.id);
+                div.innerHTML = `
+                    <div>
+                        <strong><i class="fa-solid fa-user-tie"></i> ${insp.name}</strong>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${insp.spec}</div>
+                    </div>
+                    <span class="tag" style="background:#dbeafe; color:#1e40af;">${insp.assignments.length} مؤسسات</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addInspector() {
+            const name = document.getElementById('new-inspector-name').value.trim();
+            const spec = document.getElementById('new-inspector-spec').value.trim();
+
+            if (!name) {
+                alert('يرجى إدخال اسم المفتش');
+                return;
+            }
+
+            const newId = inspectors.length ? Math.max(...inspectors.map(i => i.id)) + 1 : 1;
+            inspectors.push({ id: newId, name, spec: spec || 'عام', assignments: [] });
+
+            document.getElementById('new-inspector-name').value = '';
+            document.getElementById('new-inspector-spec').value = '';
+
+            renderInspectorsList();
+            populateReportFilters();
+        }
+
+        function selectInspector(id) {
+            activeInspectorId = id;
+            renderInspectorsList();
+
+            const insp = inspectors.find(i => i.id === id);
+            if (!insp) return;
+
+            document.getElementById('selected-inspector-name').innerText = `${insp.name} (${insp.spec})`;
+            document.getElementById('assign-form-container').style.display = 'block';
+            document.getElementById('no-inspector-selected').style.display = 'none';
+
+            renderAssignedSchoolsTable(insp);
+        }
+
+        function populateAssignSelects() {
+            const schoolSelect = document.getElementById('assign-school-select');
+            const subjectSelect = document.getElementById('assign-subject-select');
+
+            const schools = new Set();
+            const subjects = new Set();
+
+            rawEmployeesData.forEach(e => {
+                if (e['المؤسسة']) schools.add(e['المؤسسة']);
+                if (e['المادة']) subjects.add(e['المادة']);
+            });
+
+            schoolSelect.innerHTML = '<option value="">-- اختر مؤسسة --</option>';
+            Array.from(schools).sort().forEach(s => {
+                schoolSelect.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+
+            subjectSelect.innerHTML = '<option value="جميع التخصصات">جميع التخصصات المتاحة بالمؤسسة</option>';
+            Array.from(subjects).sort().forEach(sub => {
+                subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+            });
+        }
+
+        function assignSchoolToInspector() {
+            if (!activeInspectorId) return;
+
+            const school = document.getElementById('assign-school-select').value;
+            const subject = document.getElementById('assign-subject-select').value;
+
+            if (!school) {
+                alert('يرجى اختيار المؤسسة');
+                return;
+            }
+
+            const insp = inspectors.find(i => i.id === activeInspectorId);
+            
+            // Check duplicate
+            const exists = insp.assignments.some(a => a.school === school && a.subject === subject);
+            if (exists) {
+                alert('هذه المؤسسة والتخصص مسندة بالفعل لهذا المفتش!');
+                return;
+            }
+
+            insp.assignments.push({ school, subject });
+            renderAssignedSchoolsTable(insp);
+            renderInspectorsList();
+            alert('تمت عملية الإسناد بنجاح!');
+        }
+
+        function removeAssignment(school, subject) {
+            if (!activeInspectorId) return;
+            const insp = inspectors.find(i => i.id === activeInspectorId);
+            insp.assignments = insp.assignments.filter(a => !(a.school === school && a.subject === subject));
+            
+            renderAssignedSchoolsTable(insp);
+            renderInspectorsList();
+        }
+
+        function renderAssignedSchoolsTable(insp) {
+            const tbody = document.getElementById('assigned-schools-table');
+            tbody.innerHTML = '';
+
+            if (insp.assignments.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:1rem; color:var(--text-muted);">لا توجد مؤسسات مسندة حتى الآن.</td></tr>`;
+                return;
+            }
+
+            insp.assignments.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${a.school}</strong></td>
+                    <td><span class="tag">${a.subject}</span></td>
+                    <td>
+                        <button class="btn btn-danger" style="padding:2px 8px; font-size:0.75rem;" onclick="removeAssignment('${a.school}', '${a.subject}')">
+                            <i class="fa-solid fa-trash"></i> إلغاء الربط
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Export Updated Main Excel File
+        function exportUpdatedExcel() {
+            if (rawEmployeesData.length === 0) {
+                alert('لا توجد بيانات لتصديرها');
+                return;
+            }
+
+            // Remove internal _id field
+            const cleanData = rawEmployeesData.map(({ _id, ...rest }) => rest);
+            const ws = XLSX.utils.json_to_sheet(cleanData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "الموظفين_المحين");
+            XLSX.writeFile(wb, "سجل_الموظفين_المحين.xlsx");
+        }
+
+        // Export Current Report to Excel
+        function exportReportToExcel() {
+            const reportTable = document.getElementById('reports-table-body');
+            const rows = reportTable.querySelectorAll('tr');
+
+            if (rows.length === 0 || rows[0].cells.length < 5) {
+                alert('لا توجد بيانات تقارير لتصديرها');
+                return;
+            }
+
+            const dataToExport = [];
+            rows.forEach(r => {
+                const cols = r.querySelectorAll('td');
+                if (cols.length >= 10) {
+                    dataToExport.push({
+                        'الرقم الوظيفي': cols[1].innerText,
+                        'اسم ولقب الموظف': cols[2].innerText,
+                        'المؤسسة': cols[3].innerText,
+                        'الرتبة': cols[4].innerText,
+                        'الدرجة': cols[5].innerText,
+                        'المادة / التخصص': cols[6].innerText,
+                        'تاريخ آخر زيارة': cols[7].innerText,
+                        'مدة التأخر': cols[8].innerText,
+                        'المفتش المشرف': cols[9].innerText
+                    });
+                }
+            });
+
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "تقرير_التأخر_عن_التفتيش");
+            XLSX.writeFile(wb, "تقرير_الموظفين_المتأخرين_عن_التفتيش.xlsx");
+        }
+    </script>
+</body>
+</html>
