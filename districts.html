@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة تشكيل المقاطعات التفتيشية والمتابعة الميدانية</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- SheetJS for Excel Reading and Writing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; color: black; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-slate-900 via-brand-900 to-indigo-950 text-white shadow-lg sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <div class="w-12 h-12 bg-indigo-600/30 border border-indigo-400/30 rounded-2xl flex items-center justify-center text-indigo-300 text-2xl shadow-inner">
+                    <i class="fa-solid fa-sitemap"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-white">منصة تشكيل المقاطعات التفتيشية والمتابعة</h1>
+                    <p class="text-xs text-indigo-200/80 font-medium">مديرية التربية - نظام إدارة وإسناد المقاطعات والزيارات الميدانية</p>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <nav class="flex bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/60 shadow-inner">
+                <button id="nav-btn-builder" onclick="switchTab('builder')" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-folder-plus"></i>
+                    <span>تشكيل المقاطعات</span>
+                </button>
+                <button id="nav-btn-viewer" onclick="switchTab('viewer')" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>المعاينة والمتابعة التفتيشية</span>
+                    <span id="badge-overdue" class="hidden px-2 py-0.5 text-xs bg-rose-500 text-white font-extrabold rounded-full">0</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Excel File Upload Section -->
+        <section class="no-print bg-white rounded-2xl border-2 border-dashed border-indigo-200 hover:border-indigo-400 p-6 mb-8 text-center transition-all duration-300 shadow-sm hover:shadow-md relative group cursor-pointer" id="drop-zone">
+            <input type="file" id="excel-file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept=".xlsx, .xls">
+            <div class="flex flex-col items-center justify-center space-y-3">
+                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">قم بسحب وإسقاط ملف إكسل الموظفين المرجعي هنا، أو اضغط للتصفح</h2>
+                    <p class="text-xs text-slate-500 mt-1">يتم قراءة جميع الحقول والأعمدة المعتمدة بما فيها أصحاب الدرجة 12 بدون استثناء</p>
+                </div>
+                <div id="file-status-indicator" class="hidden items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold mt-2">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span id="file-status-text">تم تحميل الملف بنجاح</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 1: DISTRICT BUILDER WIZARD -->
+        <div id="tab-builder-content" class="space-y-6">
+
+            <!-- FRAME 1: INSPECTOR SELECTION -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm">1</div>
+                    <h3 class="text-base font-extrabold text-slate-800">تحديد مفتش المقاطعة التفتيشية</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">اختيار من قائمة المفتشين (المستخرجة تلقائياً من حقل الرتبة):</label>
+                        <select id="select-inspector-auto" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="handleAutoInspectorSelect(this.value)">
+                            <option value="">-- اختر المفتش --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">أو إدراج اسم المفتش يدوياً (متاح دائماً):</label>
+                        <input type="text" id="input-inspector-manual" placeholder="ادخل اسم ولقب المفتش..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="handleManualInspectorInput()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- FRAME 2: RANKS SELECTION -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm">2</div>
+                        <h3 class="text-base font-extrabold text-slate-800">تحديد الرتب التي يشرف عليها المفتش</h3>
+                    </div>
+                    <button type="button" onclick="toggleAllRanks()" class="text-xs font-bold text-indigo-600 hover:text-indigo-800">تحديد/إلغاء الكل</button>
+                </div>
+                <div id="ranks-checkbox-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto custom-scrollbar p-1">
+                    <p class="text-xs text-slate-400 col-span-full text-center py-4">يرجى تحميل ملف إكسل الموظفين المرجعي أولاً</p>
+                </div>
+            </div>
+
+            <!-- FRAME 3: MUNICIPALITY & SCHOOLS SELECTION -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm">3</div>
+                    <h3 class="text-base font-extrabold text-slate-800">تحديد البلديات والمؤسسات التابعة للمقاطعة</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div class="md:col-span-5 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">اختر البلدية أولاً:</label>
+                            <select id="select-municipality" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="handleMunicipalityChange(this.value)">
+                                <option value="">-- اختر البلدية --</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center text-xs font-bold text-slate-700 mb-1">
+                                <span>قائمة مؤسسات البلدية المختارة:</span>
+                                <button type="button" onclick="addAllCurrentMunicipalitySchools()" class="text-indigo-600 hover:underline">إضافة كافة مؤسسات البلدية</button>
+                            </div>
+                            <select id="select-schools-multi" multiple class="w-full h-36 bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-medium text-slate-800 custom-scrollbar focus:outline-none">
+                            </select>
+                            <button type="button" onclick="addSelectedSchoolsToDistrict()" class="w-full mt-2 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs rounded-lg border border-indigo-200 transition">
+                                <i class="fa-solid fa-plus-circle"></i> إضافة المؤسسات المحددة المقاطعة
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Schools Tags Summary -->
+                    <div class="md:col-span-7 bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center border-b border-slate-200 pb-2 mb-3">
+                                <span class="text-xs font-extrabold text-slate-700">المؤسسات المضافة للمقاطعة الحالية:</span>
+                                <span id="count-assigned-schools" class="px-2 py-0.5 bg-indigo-100 text-indigo-700 font-black rounded-full text-xs">0 مؤسسة</span>
+                            </div>
+                            <div id="district-schools-tags" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+                                <span class="text-xs text-slate-400 italic">لم يتم إضافة مؤسسات بعد...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FRAME 4: EMPLOYEES PREVIEW TABLE AND ACTION BUTTONS -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm">4</div>
+                        <h3 class="text-base font-extrabold text-slate-800">القائمة الاسمية للموظفين التابعين للمقاطعة وحالة تفتيشهم</h3>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-500">عدد موظفي المقاطعة الحالية:</span>
+                        <span id="preview-employees-count" class="text-lg font-black text-indigo-600 bg-indigo-50 px-3 py-0.5 rounded-full border border-indigo-200">0</span>
+                    </div>
+                </div>
+
+                <!-- Preview Table -->
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-800 text-white font-bold">
+                            <tr>
+                                <th class="p-2.5">#</th>
+                                <th class="p-2.5">اللقب والاسم</th>
+                                <th class="p-2.5">الرتبة</th>
+                                <th class="p-2.5">الدرجة</th>
+                                <th class="p-2.5">المؤسسة والبلدية</th>
+                                <th class="p-2.5">النقطة التربوية</th>
+                                <th class="p-2.5">تاريخ النقطة</th>
+                                <th class="p-2.5">حالة التفتيش</th>
+                            </tr>
+                        </thead>
+                        <tbody id="district-preview-tbody" class="divide-y divide-slate-200 font-medium bg-slate-50">
+                            <tr>
+                                <td colspan="8" class="text-center py-8 text-slate-400">اختر المفتش والمؤسسات والرتب المعنية لإظهار قائمة موظفي المقاطعة</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                    <button onclick="commitCurrentDistrictSheet()" class="w-full sm:flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>حفظ المقاطعة التفتيشية في الخلفية</span>
+                    </button>
+                    <button onclick="resetDistrictBuilderForm()" class="w-full sm:w-auto px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>إنشاء مقاطعة جديدة (إعادة التعيين)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MASTER WORKBOOK SHEETS SUMMARY AND MASTER EXPORT -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+                    <div>
+                        <h2 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-indigo-600"></i>
+                            <span>قائمة أوراق المقاطعات المحفوظة في الخلفية (Draft Master)</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">بعد إتمام جميع المقاطعات، اضغط زر الحفظ الكلي لتصدير الملف</p>
+                    </div>
+
+                    <button onclick="exportMasterExcelWorkbook()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+                        <i class="fa-solid fa-file-export"></i>
+                        <span>الحفظ الكلي وتصدير ملف المقاطعات (Excel)</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-800 text-white font-bold">
+                            <tr>
+                                <th class="p-3">#</th>
+                                <th class="p-3">اسم المفتش (الورقة)</th>
+                                <th class="p-3">عدد المؤسسات</th>
+                                <th class="p-3">عدد الموظفين</th>
+                                <th class="p-3 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="master-sheets-tbody" class="divide-y divide-slate-200 font-medium bg-slate-50">
+                            <tr>
+                                <td colspan="5" class="text-center py-6 text-slate-400">لم يتم حفظ أي ورقة مقاطعة بعد في الخلفية</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TAB 2: INSPECTION VIEWER & UPDATER -->
+        <div id="tab-viewer-content" class="hidden space-y-6">
+            
+            <!-- Statistics Header -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">إجمالي المعروضين</span>
+                        <span id="stat-viewer-total" class="text-xl font-black text-slate-800">0</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">زيارات متأخرة (> سنتين)</span>
+                        <span id="stat-viewer-overdue" class="text-xl font-black text-rose-600">0</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">زيارات محيّنة</span>
+                        <span id="stat-viewer-updated" class="text-xl font-black text-emerald-600">0</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">الموظفين بالدرجة 12</span>
+                        <span id="stat-viewer-deg12" class="text-xl font-black text-amber-600">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400"></i>
+                    <input type="text" id="viewer-search-input" placeholder="بحث بالاسم، اللقب، المؤسسة، الرتبة..." class="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="renderViewerTable()">
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <select id="viewer-filter-status" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable()">
+                        <option value="all">جميع الزيارات</option>
+                        <option value="overdue">الزيارات المتأخرة فقط (> سنتين)</option>
+                        <option value="valid">الزيارات المحينة فقط</option>
+                    </select>
+
+                    <select id="viewer-filter-inspector" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable()">
+                        <option value="">جميع أوراق المقاطعات</option>
+                    </select>
+
+                    <button onclick="exportCurrentViewerDataExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>تصدير البيانات المعروضة</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Viewer Table -->
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-800 text-white font-bold">
+                            <tr>
+                                <th class="p-3">#</th>
+                                <th class="p-3">اللقب والاسم</th>
+                                <th class="p-3">الرتبة</th>
+                                <th class="p-3">الدرجة</th>
+                                <th class="p-3">المؤسسة والبلدية</th>
+                                <th class="p-3">النقطة التربوية</th>
+                                <th class="p-3">تاريخ النقطة</th>
+                                <th class="p-3">حالة التفتيش</th>
+                                <th class="p-3 text-center">تعديل النقطة والتاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="viewer-table-tbody" class="divide-y divide-slate-200 font-medium">
+                            <tr>
+                                <td colspan="9" class="text-center py-10 text-slate-400">يرجى رفع ملف الموظفين أو تحميل أوراق المقاطعات للاستعراض</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal for Updating Score & Date -->
+    <div id="update-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 mx-4 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+                    <span>تحيين النقطة وتاريخ الزيارة التربوية</span>
+                </h3>
+                <button onclick="closeUpdateModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                    <span class="text-xs text-slate-500 font-bold block">الموظف المعني:</span>
+                    <span id="modal-employee-name" class="text-sm font-black text-indigo-900 block">-</span>
+                    <span id="modal-employee-detail" class="text-xs text-indigo-700 block mt-0.5">-</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">النقطة التربوية الممنوحة:</label>
+                    <input type="number" step="0.25" min="0" max="20" id="modal-input-score" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ النقطة التربوية / الزيارة:</label>
+                    <input type="date" id="modal-input-date" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                <button onclick="closeUpdateModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-lg transition">إلغاء</button>
+                <button onclick="saveInspectionUpdate()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg shadow-md transition">حفظ التحيين</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Data State
+        let masterRawEmployees = [];
+        let autoFoundInspectors = [];
+        let uniqueRanks = [];
+        let uniqueMunicipalities = [];
+        let schoolToMunicipalityMap = {};
+
+        // Active District Form State
+        let currentSelectedInspector = "";
+        let currentSelectedRanks = new Set();
+        let currentAssignedSchools = new Set();
+
+        // Draft Master Sheets Saved in Background
+        let masterDraftSheets = [];
+
+        // Active Edit Target Index
+        let activeEditEmployeeIndex = -1;
+
+        const TODAY = new Date();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDragAndDrop();
+        });
+
+        function switchTab(tab) {
+            const btnBuilder = document.getElementById('nav-btn-builder');
+            const btnViewer = document.getElementById('nav-btn-viewer');
+            const contentBuilder = document.getElementById('tab-builder-content');
+            const contentViewer = document.getElementById('tab-viewer-content');
+
+            if (tab === 'builder') {
+                btnBuilder.className = "px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnViewer.className = "px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50";
+                contentBuilder.classList.remove('hidden');
+                contentViewer.classList.add('hidden');
+            } else {
+                btnViewer.className = "px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnBuilder.className = "px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50";
+                contentViewer.classList.remove('hidden');
+                contentBuilder.classList.add('hidden');
+                renderViewerTable();
+            }
+        }
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('excel-file-input');
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-indigo-500', 'bg-indigo-50/50');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    processUploadedExcel(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    processUploadedExcel(e.target.files[0]);
+                }
+            });
+        }
+
+        function extractVal(row, possibleKeys) {
+            for (let key of possibleKeys) {
+                if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") {
+                    return String(row[key]).trim();
+                }
+            }
+            return "";
+        }
+
+        function processUploadedExcel(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+                const jsonRows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+                masterRawEmployees = [];
+                const rankSet = new Set();
+                const inspectorSet = new Set();
+                const munipSet = new Set();
+                schoolToMunicipalityMap = {};
+
+                jsonRows.forEach((row, idx) => {
+                    let surname = extractVal(row, ['اللقب', 'لقب', 'Nom', 'NOM']);
+                    let firstname = extractVal(row, ['الاسم', 'اسم', 'Prenom', 'PRENOM']);
+                    let rank = extractVal(row, ['الرتبة', 'رتبة', 'Grade', 'GRADE']);
+
+                    if (!surname && !firstname && !rank) return;
+
+                    let school = extractVal(row, ['المؤسسة', 'مؤسسة']);
+                    let munip = extractVal(row, ['البلدية', 'بلدية']);
+                    let degree = extractVal(row, ['الدرجة', 'درجة']);
+                    let eduScore = extractVal(row, ['النقطة التربوية', 'النقطة']);
+                    let eduScoreDate = extractVal(row, ['تاريخ النقطة التربوية', 'تاريخ النقطة']);
+
+                    if (eduScoreDate && typeof eduScoreDate === 'string' && eduScoreDate.includes('T')) {
+                        eduScoreDate = eduScoreDate.split('T')[0];
+                    }
+
+                    const empObj = {
+                        id: idx + 1,
+                        surname: surname,
+                        firstname: firstname,
+                        fullname: `${surname} ${firstname}`.trim(),
+                        rank: rank,
+                        school: school,
+                        municipality: munip,
+                        degree: degree,
+                        eduScore: eduScore,
+                        eduScoreDate: eduScoreDate,
+                        birthDate: extractVal(row, ['تاريخ الازدياد', 'تاريخ الميلاد']),
+                        phone: extractVal(row, ['الهاتف المحمول', 'الهاتف']),
+                        adminStatus: extractVal(row, ['الوضعية الادارية', 'الوضعية الإدارية']),
+                        hireDate: extractVal(row, ['تاريخ التوظيف']),
+                        assignRankDate: extractVal(row, ['تاريخ التعيين في الرتبة', 'تاريخ التعيين بالرتبة']),
+                        confirmationDate: extractVal(row, ['تاريخ الترسيم']),
+                        schoolAssignDate: extractVal(row, ['تاريخ التعيين في المؤسسة']),
+                        assignType: extractVal(row, ['صفة التعيين']),
+                        effectiveDate: extractVal(row, ['تاريخ السريان']),
+                        rawRow: row
+                    };
+
+                    masterRawEmployees.push(empObj);
+
+                    if (rank) {
+                        rankSet.add(rank);
+                        if (rank.includes('مفتش')) {
+                            inspectorSet.add(empObj.fullname + " (" + rank + ")");
+                        }
+                    }
+
+                    if (munip) munipSet.add(munip);
+                    if (school && munip) schoolToMunicipalityMap[school] = munip;
+                });
+
+                autoFoundInspectors = Array.from(inspectorSet).sort();
+                uniqueRanks = Array.from(rankSet).sort();
+                uniqueMunicipalities = Array.from(munipSet).sort();
+
+                document.getElementById('file-status-indicator').classList.remove('hidden');
+                document.getElementById('file-status-indicator').classList.add('flex');
+                document.getElementById('file-status-text').innerText = `تم استيراد ${masterRawEmployees.length} موظفاً بنجاح!`;
+
+                populateAutoInspectorsSelect();
+                populateRanksCheckboxes();
+                populateMunicipalitiesSelect();
+                populateViewerInspectorFilter();
+                updateOverdueBadgeCount();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function populateAutoInspectorsSelect() {
+            const select = document.getElementById('select-inspector-auto');
+            select.innerHTML = '<option value="">-- اختر المفتش --</option>';
+            autoFoundInspectors.forEach(insp => {
+                select.innerHTML += `<option value="${insp}">${insp}</option>`;
+            });
+        }
+
+        function populateRanksCheckboxes() {
+            const container = document.getElementById('ranks-checkbox-container');
+            container.innerHTML = '';
+            if (uniqueRanks.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-4">لا توجد رتب متاحة</p>';
+                return;
+            }
+
+            uniqueRanks.forEach(rank => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center space-x-2 space-x-reverse text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-indigo-50/50 p-2 rounded-lg border border-slate-200 cursor-pointer transition';
+                label.innerHTML = `
+                    <input type="checkbox" value="${rank}" class="rank-checkbox rounded text-indigo-600 focus:ring-indigo-500" onchange="handleRankCheckboxChange()">
+                    <span>${rank}</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        function toggleAllRanks() {
+            const checkboxes = document.querySelectorAll('.rank-checkbox');
+            const allChecked = Array.from(checkboxes).every(c => c.checked);
+            checkboxes.forEach(c => c.checked = !allChecked);
+            handleRankCheckboxChange();
+        }
+
+        function populateMunicipalitiesSelect() {
+            const select = document.getElementById('select-municipality');
+            select.innerHTML = '<option value="">-- اختر البلدية --</option>';
+            uniqueMunicipalities.forEach(m => {
+                select.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+        }
+
+        function handleMunicipalityChange(munip) {
+            const schoolsSelect = document.getElementById('select-schools-multi');
+            schoolsSelect.innerHTML = '';
+
+            if (!munip) return;
+
+            const schoolsInMunip = new Set();
+            masterRawEmployees.forEach(emp => {
+                if (emp.municipality === munip && emp.school) {
+                    schoolsInMunip.add(emp.school);
+                }
+            });
+
+            Array.from(schoolsInMunip).sort().forEach(school => {
+                schoolsSelect.innerHTML += `<option value="${school}">${school}</option>`;
+            });
+        }
+
+        function addSelectedSchoolsToDistrict() {
+            const schoolsSelect = document.getElementById('select-schools-multi');
+            const selectedOptions = Array.from(schoolsSelect.selectedOptions);
+            selectedOptions.forEach(opt => currentAssignedSchools.add(opt.value));
+            renderDistrictSchoolsTags();
+            updateDistrictEmployeePreview();
+        }
+
+        function addAllCurrentMunicipalitySchools() {
+            const schoolsSelect = document.getElementById('select-schools-multi');
+            Array.from(schoolsSelect.options).forEach(opt => currentAssignedSchools.add(opt.value));
+            renderDistrictSchoolsTags();
+            updateDistrictEmployeePreview();
+        }
+
+        function removeSchoolFromDistrict(schoolName) {
+            currentAssignedSchools.delete(schoolName);
+            renderDistrictSchoolsTags();
+            updateDistrictEmployeePreview();
+        }
+
+        function renderDistrictSchoolsTags() {
+            const container = document.getElementById('district-schools-tags');
+            const counter = document.getElementById('count-assigned-schools');
+            container.innerHTML = '';
+
+            counter.innerText = `${currentAssignedSchools.size} مؤسسة`;
+
+            if (currentAssignedSchools.size === 0) {
+                container.innerHTML = '<span class="text-xs text-slate-400 italic">لم يتم إضافة مؤسسات بعد...</span>';
+                return;
+            }
+
+            currentAssignedSchools.forEach(school => {
+                const munip = schoolToMunicipalityMap[school] || '';
+                const tag = document.createElement('div');
+                tag.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-lg text-xs font-bold shadow-sm';
+                tag.innerHTML = `
+                    <span>${school} ${munip ? '(' + munip + ')' : ''}</span>
+                    <button type="button" onclick="removeSchoolFromDistrict('${school}')" class="text-indigo-400 hover:text-rose-600 transition"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                container.appendChild(tag);
+            });
+        }
+
+        function handleAutoInspectorSelect(val) {
+            if (val) {
+                document.getElementById('input-inspector-manual').value = "";
+                currentSelectedInspector = val;
+            } else {
+                currentSelectedInspector = document.getElementById('input-inspector-manual').value.trim();
+            }
+        }
+
+        function handleManualInspectorInput() {
+            const val = document.getElementById('input-inspector-manual').value.trim();
+            if (val) {
+                document.getElementById('select-inspector-auto').value = "";
+                currentSelectedInspector = val;
+            } else {
+                currentSelectedInspector = document.getElementById('select-inspector-auto').value;
+            }
+        }
+
+        function handleRankCheckboxChange() {
+            currentSelectedRanks.clear();
+            const checkboxes = document.querySelectorAll('.rank-checkbox:checked');
+            checkboxes.forEach(c => currentSelectedRanks.add(c.value));
+            updateDistrictEmployeePreview();
+        }
+
+        function getMatchingEmployeesForCurrentDistrict() {
+            if (currentAssignedSchools.size === 0) return [];
+
+            return masterRawEmployees.filter(emp => {
+                const matchesSchool = currentAssignedSchools.has(emp.school);
+                const matchesRank = currentSelectedRanks.size === 0 || currentSelectedRanks.has(emp.rank);
+                return matchesSchool && matchesRank;
+            });
+        }
+
+        function checkInspectionOverdueStatus(dateStr) {
+            if (!dateStr || dateStr.trim() === '') {
+                return { overdue: true, text: 'غير مسجل', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold' };
+            }
+            const visitDate = new Date(dateStr);
+            if (isNaN(visitDate.getTime())) {
+                return { overdue: true, text: 'تاريخ غير صالح', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold' };
+            }
+
+            const diffTime = Math.abs(TODAY - visitDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 730) {
+                return { overdue: true, text: 'متأخر (> سنتين)', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold' };
+            } else {
+                return { overdue: false, text: 'محيّن', badgeClass: 'bg-emerald-100 text-emerald-800 font-bold' };
+            }
+        }
+
+        function updateDistrictEmployeePreview() {
+            const tbody = document.getElementById('district-preview-tbody');
+            const countElem = document.getElementById('preview-employees-count');
+            tbody.innerHTML = '';
+
+            const matches = getMatchingEmployeesForCurrentDistrict();
+            countElem.innerText = matches.length;
+
+            if (matches.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">اختر المفتش والمؤسسات والرتب المعنية لإظهار قائمة موظفي المقاطعة</td></tr>';
+                return;
+            }
+
+            matches.forEach((emp, index) => {
+                const status = checkInspectionOverdueStatus(emp.eduScoreDate);
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-100 transition';
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold">${index + 1}</td>
+                    <td class="p-2.5 font-extrabold text-slate-800">${emp.fullname}</td>
+                    <td class="p-2.5 text-slate-600">${emp.rank || '-'}</td>
+                    <td class="p-2.5"><span class="px-2 py-0.5 ${emp.degree == '12' ? 'bg-amber-100 text-amber-800 font-extrabold' : 'bg-slate-200 text-slate-700'} rounded text-xs">${emp.degree || '-'}</span></td>
+                    <td class="p-2.5 text-slate-700">${emp.school || '-'} (${emp.municipality || '-'})</td>
+                    <td class="p-2.5 font-black text-indigo-700">${emp.eduScore || '-'}</td>
+                    <td class="p-2.5">${emp.eduScoreDate || 'غير مسجل'}</td>
+                    <td class="p-2.5"><span class="px-2 py-0.5 rounded-full text-xs ${status.badgeClass}">${status.text}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function resetDistrictBuilderForm() {
+            document.getElementById('select-inspector-auto').value = "";
+            document.getElementById('input-inspector-manual').value = "";
+            currentSelectedInspector = "";
+
+            const checkboxes = document.querySelectorAll('.rank-checkbox');
+            checkboxes.forEach(c => c.checked = false);
+            currentSelectedRanks.clear();
+
+            document.getElementById('select-municipality').value = "";
+            document.getElementById('select-schools-multi').innerHTML = "";
+            currentAssignedSchools.clear();
+
+            renderDistrictSchoolsTags();
+            updateDistrictEmployeePreview();
+        }
+
+        function commitCurrentDistrictSheet() {
+            const inspName = currentSelectedInspector || "مقاطعة بدون اسم";
+            const matchingEmployees = getMatchingEmployeesForCurrentDistrict();
+
+            if (currentAssignedSchools.size === 0) {
+                alert("يرجى اختيار مؤسسة واحدة على الأقل للمقاطعة التفتيشية!");
+                return;
+            }
+
+            const sheetObj = {
+                id: Date.now(),
+                inspectorName: inspName,
+                schools: Array.from(currentAssignedSchools),
+                ranks: Array.from(currentSelectedRanks),
+                employees: matchingEmployees
+            };
+
+            masterDraftSheets.push(sheetObj);
+
+            renderMasterSheetsTable();
+            populateViewerInspectorFilter();
+            alert(`تم حفظ ورقة المقاطعة لـ (${inspName}) بنجاح! يمكنك الآن الضغط على "إنشاء مقاطعة جديدة" لإدراج مفتش آخر.`);
+        }
+
+        function renderMasterSheetsTable() {
+            const tbody = document.getElementById('master-sheets-tbody');
+            tbody.innerHTML = '';
+
+            if (masterDraftSheets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-slate-400">لم يتم حفظ أي ورقة مقاطعة بعد في الخلفية</td></tr>';
+                return;
+            }
+
+            masterDraftSheets.forEach((sheet, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-100 transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${idx + 1}</td>
+                    <td class="p-3 font-extrabold text-indigo-900">${sheet.inspectorName}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded-full font-bold">${sheet.schools.length} مؤسسة</span></td>
+                    <td class="p-3"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold">${sheet.employees.length} موظف</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteMasterSheet(${sheet.id})" class="text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 transition">
+                            <i class="fa-solid fa-trash-can"></i> حذف
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteMasterSheet(id) {
+            masterDraftSheets = masterDraftSheets.filter(s => s.id !== id);
+            renderMasterSheetsTable();
+            populateViewerInspectorFilter();
+        }
+
+        function exportMasterExcelWorkbook() {
+            if (masterDraftSheets.length === 0) {
+                alert("لا توجد مقاطعات محفوظة للتصدير! قم بحفظ مقاطعة واحدة على الأقل أولاً.");
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+
+            masterDraftSheets.forEach(sheet => {
+                let sheetName = sheet.inspectorName.replace(/[:\\/?*\[\]]/g, '').trim();
+                if (sheetName.length > 30) sheetName = sheetName.substring(0, 30);
+                if (!sheetName) sheetName = "مقاطعة";
+
+                const excelRows = sheet.employees.map((emp, i) => ({
+                    "الرقم": i + 1,
+                    "اللقب": emp.surname,
+                    "الاسم": emp.firstname,
+                    "اللقب والاسم": emp.fullname,
+                    "الرتبة": emp.rank,
+                    "الدرجة": emp.degree,
+                    "المؤسسة": emp.school,
+                    "البلدية": emp.municipality,
+                    "النقطة التربوية": emp.eduScore,
+                    "تاريخ النقطة التربوية": emp.eduScoreDate,
+                    "تاريخ الميلاد": emp.birthDate,
+                    "الهاتف المحمول": emp.phone,
+                    "الوضعية الإدارية": emp.adminStatus,
+                    "تاريخ التوظيف": emp.hireDate,
+                    "تاريخ التعيين بالرتبة": emp.assignRankDate,
+                    "تاريخ الترسيم": emp.confirmationDate,
+                    "تاريخ التعيين بالمؤسسة": emp.schoolAssignDate,
+                    "صفة التعيين": emp.assignType,
+                    "تاريخ السريان": emp.effectiveDate,
+                    "اسم المفتش المشرف": sheet.inspectorName
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(excelRows);
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            });
+
+            XLSX.writeFile(wb, "ملف_المقاطعات_التفتيشية.xlsx");
+        }
+
+        function populateViewerInspectorFilter() {
+            const select = document.getElementById('viewer-filter-inspector');
+            select.innerHTML = '<option value="">جميع أوراق المقاطعات</option>';
+            masterDraftSheets.forEach(s => {
+                select.innerHTML += `<option value="${s.id}">${s.inspectorName}</option>`;
+            });
+        }
+
+        // Return Employees based on current selection in Inspector Filter
+        function getViewerCurrentEmployees() {
+            const selectedSheetId = document.getElementById('viewer-filter-inspector').value;
+
+            if (selectedSheetId) {
+                const sheet = masterDraftSheets.find(s => s.id == selectedSheetId);
+                return sheet ? sheet.employees : [];
+            } else {
+                // "جميع أوراق المقاطعات" selected:
+                // If sheets exist in draft master, gather all employees across sheets (removing duplicate employee references)
+                if (masterDraftSheets.length > 0) {
+                    const mergedMap = new Map();
+                    masterDraftSheets.forEach(s => {
+                        s.employees.forEach(emp => {
+                            mergedMap.set(emp.id, emp);
+                        });
+                    });
+                    return Array.from(mergedMap.values());
+                } else {
+                    // Fallback to all loaded employees from uploaded Excel file
+                    return masterRawEmployees;
+                }
+            }
+        }
+
+        function renderViewerTable() {
+            const tbody = document.getElementById('viewer-table-tbody');
+            const search = document.getElementById('viewer-search-input').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('viewer-filter-status').value;
+
+            const sourceList = getViewerCurrentEmployees();
+            tbody.innerHTML = '';
+
+            let totalCount = sourceList.length;
+            let overdueCount = 0;
+            let updatedCount = 0;
+            let degree12Count = 0;
+
+            const filtered = sourceList.filter(emp => {
+                const status = checkInspectionOverdueStatus(emp.eduScoreDate);
+                if (status.overdue) overdueCount++;
+                else updatedCount++;
+
+                if (emp.degree == '12') degree12Count++;
+
+                const matchesSearch = !search || 
+                    emp.fullname.toLowerCase().includes(search) || 
+                    (emp.rank && emp.rank.toLowerCase().includes(search)) || 
+                    (emp.school && emp.school.toLowerCase().includes(search));
+
+                let matchesStatus = true;
+                if (statusFilter === 'overdue') matchesStatus = status.overdue;
+                if (statusFilter === 'valid') matchesStatus = !status.overdue;
+
+                return matchesSearch && matchesStatus;
+            });
+
+            document.getElementById('stat-viewer-total').innerText = totalCount;
+            document.getElementById('stat-viewer-overdue').innerText = overdueCount;
+            document.getElementById('stat-viewer-updated').innerText = updatedCount;
+            document.getElementById('stat-viewer-deg12').innerText = degree12Count;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400">لا توجد سجلات مطابقة للبحث أو التصفية الحالية</td></tr>';
+                return;
+            }
+
+            filtered.forEach((emp, index) => {
+                const status = checkInspectionOverdueStatus(emp.eduScoreDate);
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${index + 1}</td>
+                    <td class="p-3 font-extrabold text-slate-800">${emp.fullname}</td>
+                    <td class="p-3 text-slate-600">${emp.rank || '-'}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 ${emp.degree == '12' ? 'bg-amber-100 text-amber-800 font-black' : 'bg-slate-100 text-slate-700'} rounded text-xs">${emp.degree || '-'}</span></td>
+                    <td class="p-3 text-slate-700 font-semibold">${emp.school || '-'} (${emp.municipality || '-'})</td>
+                    <td class="p-3 font-black text-indigo-700">${emp.eduScore || '-'}</td>
+                    <td class="p-3 font-medium">${emp.eduScoreDate || 'غير مسجل'}</td>
+                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${status.badgeClass}">${status.text}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="openInspectionUpdateModal(${emp.id})" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-lg border border-indigo-200 transition flex items-center gap-1 mx-auto">
+                            <i class="fa-solid fa-pen"></i> تحيين
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateOverdueBadgeCount() {
+            let overdue = 0;
+            masterRawEmployees.forEach(e => {
+                if (checkInspectionOverdueStatus(e.eduScoreDate).overdue) overdue++;
+            });
+            const badge = document.getElementById('badge-overdue');
+            if (overdue > 0) {
+                badge.innerText = overdue;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openInspectionUpdateModal(empId) {
+            const emp = masterRawEmployees.find(e => e.id === empId);
+            if (!emp) return;
+
+            activeEditEmployeeIndex = masterRawEmployees.findIndex(e => e.id === empId);
+
+            document.getElementById('modal-employee-name').innerText = emp.fullname;
+            document.getElementById('modal-employee-detail').innerText = `${emp.rank || ''} - ${emp.school || ''}`;
+            document.getElementById('modal-input-score').value = emp.eduScore || '';
+            document.getElementById('modal-input-date').value = emp.eduScoreDate || '';
+
+            document.getElementById('update-modal').classList.remove('hidden');
+        }
+
+        function closeUpdateModal() {
+            document.getElementById('update-modal').classList.add('hidden');
+        }
+
+        function saveInspectionUpdate() {
+            if (activeEditEmployeeIndex === -1) return;
+
+            const newScore = document.getElementById('modal-input-score').value;
+            const newDate = document.getElementById('modal-input-date').value;
+
+            masterRawEmployees[activeEditEmployeeIndex].eduScore = newScore;
+            masterRawEmployees[activeEditEmployeeIndex].eduScoreDate = newDate;
+
+            closeUpdateModal();
+            renderViewerTable();
+            updateOverdueBadgeCount();
+
+            alert("تم تحيين النقطة وتاريخ الزيارة التربوية بنجاح!");
+        }
+
+        function exportCurrentViewerDataExcel() {
+            const currentData = getViewerCurrentEmployees();
+            if (currentData.length === 0) {
+                alert("لا توجد بيانات معروضة للتصدير!");
+                return;
+            }
+
+            const exportRows = currentData.map((emp, i) => ({
+                "الرقم": i + 1,
+                "اللقب والاسم": emp.fullname,
+                "الرتبة": emp.rank,
+                "الدرجة": emp.degree,
+                "المؤسسة": emp.school,
+                "البلدية": emp.municipality,
+                "النقطة التربوية": emp.eduScore,
+                "تاريخ النقطة التربوية": emp.eduScoreDate,
+                "حالة التفتيش": checkInspectionOverdueStatus(emp.eduScoreDate).text
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "المعينين_بالتفتيش");
+            XLSX.writeFile(wb, "تقرير_المتابعة_التفتيشية.xlsx");
+        }
+    </script>
+</body>
+</html>
