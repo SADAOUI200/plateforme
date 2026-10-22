@@ -55,6 +55,15 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        .page-btn {
+            display: inline-flex; align-items: center; gap: .4rem;
+            padding: .45rem .8rem; font-size: .75rem; font-weight: 700;
+            border-radius: .5rem; border: 1px solid #c7d2fe;
+            background: #eef2ff; color: #4338ca; cursor: pointer;
+            transition: all .15s ease;
+        }
+        .page-btn:hover:not(:disabled) { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+        .page-btn:disabled { opacity: .45; cursor: not-allowed; background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
         @media print {
             .no-print { display: none !important; }
             body { background: white; color: black; }
@@ -102,7 +111,7 @@
                 </div>
                 <div>
                     <h2 class="text-lg font-bold text-slate-800">قم بسحب وإسقاط ملف إكسل الموظفين المرجعي هنا، أو اضغط للتصفح</h2>
-                    <p class="text-xs text-slate-500 mt-1">يتم قراءة جميع الحقول والأعمدة المعتمدة بما فيها أصحاب الدرجة 12 بدون استثناء</p>
+                    <p class="text-xs text-slate-500 mt-1">يتم قراءة جميع أوراق الملف (Sheets) وجميع الحقول والأعمدة المعتمدة بما فيها أصحاب الدرجة 12 بدون استثناء</p>
                 </div>
                 <div id="file-status-indicator" class="hidden items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold mt-2">
                     <i class="fa-solid fa-circle-check"></i>
@@ -330,17 +339,17 @@
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="relative flex-1">
                     <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400"></i>
-                    <input type="text" id="viewer-search-input" placeholder="بحث بالاسم، اللقب، المؤسسة، الرتبة..." class="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="renderViewerTable()">
+                    <input type="text" id="viewer-search-input" placeholder="بحث بالاسم، اللقب، المؤسسة، الرتبة..." class="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="renderViewerTable(true)">
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
-                    <select id="viewer-filter-status" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable()">
+                    <select id="viewer-filter-status" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable(true)">
                         <option value="all">جميع الزيارات</option>
                         <option value="overdue">الزيارات المتأخرة فقط (> سنتين)</option>
                         <option value="valid">الزيارات المحينة فقط</option>
                     </select>
 
-                    <select id="viewer-filter-inspector" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable()">
+                    <select id="viewer-filter-inspector" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable(true)">
                         <option value="">جميع أوراق المقاطعات</option>
                     </select>
 
@@ -374,6 +383,26 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Pagination Bar -->
+                <div id="viewer-pagination" class="no-print flex flex-col lg:flex-row items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3">
+                    <div id="viewer-page-summary" class="text-xs font-bold text-slate-600">لا توجد بيانات للعرض</div>
+                    <div class="flex flex-wrap items-center justify-center gap-2">
+                        <button type="button" id="btn-page-first" onclick="changeViewerPage('first')" class="page-btn">
+                            <i class="fa-solid fa-angles-right"></i><span>الصفحة الأولى</span>
+                        </button>
+                        <button type="button" id="btn-page-prev" onclick="changeViewerPage('prev')" class="page-btn">
+                            <i class="fa-solid fa-angle-right"></i><span>السابق</span>
+                        </button>
+                        <span id="viewer-page-indicator" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-800">صفحة 1 من 1</span>
+                        <button type="button" id="btn-page-next" onclick="changeViewerPage('next')" class="page-btn">
+                            <span>التالي</span><i class="fa-solid fa-angle-left"></i>
+                        </button>
+                        <button type="button" id="btn-page-last" onclick="changeViewerPage('last')" class="page-btn">
+                            <span>الصفحة الأخيرة</span><i class="fa-solid fa-angles-left"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -434,6 +463,14 @@
         // Draft Master Sheets Saved in Background
         let masterDraftSheets = [];
 
+        // Sheets read from the uploaded Excel file: [{ name, employees: [...] }]
+        let uploadedSheets = [];
+
+        // Viewer pagination state
+        const VIEWER_PAGE_SIZE = 10;
+        let viewerCurrentPage = 1;
+        let viewerTotalPages = 1;
+
         // Active Edit Target Index
         let activeEditEmployeeIndex = -1;
 
@@ -492,13 +529,32 @@
             });
         }
 
+        function formatDateValue(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
         function extractVal(row, possibleKeys) {
             for (let key of possibleKeys) {
-                if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") {
-                    return String(row[key]).trim();
+                const v = row[key];
+                if (v instanceof Date) {
+                    if (!isNaN(v.getTime())) return formatDateValue(v);
+                    continue;
+                }
+                if (v !== undefined && v !== null && String(v).trim() !== "") {
+                    return String(v).trim();
                 }
             }
             return "";
+        }
+
+        // Trim header names so " الرتبة " is matched like "الرتبة"
+        function normalizeRowKeys(row) {
+            const out = {};
+            Object.keys(row).forEach(k => { out[String(k).trim()] = row[k]; });
+            return out;
         }
 
         function processUploadedExcel(file) {
@@ -506,67 +562,83 @@
             reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-
-                const jsonRows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
 
                 masterRawEmployees = [];
+                uploadedSheets = [];
                 const rankSet = new Set();
                 const inspectorSet = new Set();
                 const munipSet = new Set();
                 schoolToMunicipalityMap = {};
+                let nextId = 1;
 
-                jsonRows.forEach((row, idx) => {
-                    let surname = extractVal(row, ['اللقب', 'لقب', 'Nom', 'NOM']);
-                    let firstname = extractVal(row, ['الاسم', 'اسم', 'Prenom', 'PRENOM']);
-                    let rank = extractVal(row, ['الرتبة', 'رتبة', 'Grade', 'GRADE']);
+                // قراءة جميع أوراق الملف (وليس الورقة الأولى فقط)
+                workbook.SheetNames.forEach(sheetName => {
+                    const ws = workbook.Sheets[sheetName];
+                    if (!ws) return;
 
-                    if (!surname && !firstname && !rank) return;
+                    const jsonRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+                    const sheetEmployees = [];
 
-                    let school = extractVal(row, ['المؤسسة', 'مؤسسة']);
-                    let munip = extractVal(row, ['البلدية', 'بلدية']);
-                    let degree = extractVal(row, ['الدرجة', 'درجة']);
-                    let eduScore = extractVal(row, ['النقطة التربوية', 'النقطة']);
-                    let eduScoreDate = extractVal(row, ['تاريخ النقطة التربوية', 'تاريخ النقطة']);
+                    jsonRows.forEach(rawRow => {
+                        const row = normalizeRowKeys(rawRow);
 
-                    if (eduScoreDate && typeof eduScoreDate === 'string' && eduScoreDate.includes('T')) {
-                        eduScoreDate = eduScoreDate.split('T')[0];
-                    }
+                        let surname = extractVal(row, ['اللقب', 'لقب', 'Nom', 'NOM']);
+                        let firstname = extractVal(row, ['الاسم', 'اسم', 'Prenom', 'PRENOM']);
+                        let rank = extractVal(row, ['الرتبة', 'رتبة', 'Grade', 'GRADE']);
 
-                    const empObj = {
-                        id: idx + 1,
-                        surname: surname,
-                        firstname: firstname,
-                        fullname: `${surname} ${firstname}`.trim(),
-                        rank: rank,
-                        school: school,
-                        municipality: munip,
-                        degree: degree,
-                        eduScore: eduScore,
-                        eduScoreDate: eduScoreDate,
-                        birthDate: extractVal(row, ['تاريخ الازدياد', 'تاريخ الميلاد']),
-                        phone: extractVal(row, ['الهاتف المحمول', 'الهاتف']),
-                        adminStatus: extractVal(row, ['الوضعية الادارية', 'الوضعية الإدارية']),
-                        hireDate: extractVal(row, ['تاريخ التوظيف']),
-                        assignRankDate: extractVal(row, ['تاريخ التعيين في الرتبة', 'تاريخ التعيين بالرتبة']),
-                        confirmationDate: extractVal(row, ['تاريخ الترسيم']),
-                        schoolAssignDate: extractVal(row, ['تاريخ التعيين في المؤسسة']),
-                        assignType: extractVal(row, ['صفة التعيين']),
-                        effectiveDate: extractVal(row, ['تاريخ السريان']),
-                        rawRow: row
-                    };
+                        if (!surname && !firstname && !rank) return;
 
-                    masterRawEmployees.push(empObj);
+                        let school = extractVal(row, ['المؤسسة', 'مؤسسة']);
+                        let munip = extractVal(row, ['البلدية', 'بلدية']);
+                        let degree = extractVal(row, ['الدرجة', 'درجة']);
+                        let eduScore = extractVal(row, ['النقطة التربوية', 'النقطة']);
+                        let eduScoreDate = extractVal(row, ['تاريخ النقطة التربوية', 'تاريخ النقطة']);
 
-                    if (rank) {
-                        rankSet.add(rank);
-                        if (rank.includes('مفتش')) {
-                            inspectorSet.add(empObj.fullname + " (" + rank + ")");
+                        if (eduScoreDate && typeof eduScoreDate === 'string' && eduScoreDate.includes('T')) {
+                            eduScoreDate = eduScoreDate.split('T')[0];
                         }
-                    }
 
-                    if (munip) munipSet.add(munip);
-                    if (school && munip) schoolToMunicipalityMap[school] = munip;
+                        const empObj = {
+                            id: nextId++,
+                            sheetName: sheetName,
+                            surname: surname,
+                            firstname: firstname,
+                            fullname: `${surname} ${firstname}`.trim(),
+                            rank: rank,
+                            school: school,
+                            municipality: munip,
+                            degree: degree,
+                            eduScore: eduScore,
+                            eduScoreDate: eduScoreDate,
+                            birthDate: extractVal(row, ['تاريخ الازدياد', 'تاريخ الميلاد']),
+                            phone: extractVal(row, ['الهاتف المحمول', 'الهاتف']),
+                            adminStatus: extractVal(row, ['الوضعية الادارية', 'الوضعية الإدارية']),
+                            hireDate: extractVal(row, ['تاريخ التوظيف']),
+                            assignRankDate: extractVal(row, ['تاريخ التعيين في الرتبة', 'تاريخ التعيين بالرتبة']),
+                            confirmationDate: extractVal(row, ['تاريخ الترسيم']),
+                            schoolAssignDate: extractVal(row, ['تاريخ التعيين في المؤسسة', 'تاريخ التعيين بالمؤسسة']),
+                            assignType: extractVal(row, ['صفة التعيين']),
+                            effectiveDate: extractVal(row, ['تاريخ السريان']),
+                            rawRow: row
+                        };
+
+                        masterRawEmployees.push(empObj);
+                        sheetEmployees.push(empObj);
+
+                        if (rank) {
+                            rankSet.add(rank);
+                            if (rank.includes('مفتش')) {
+                                inspectorSet.add(empObj.fullname + " (" + rank + ")");
+                            }
+                        }
+
+                        if (munip) munipSet.add(munip);
+                        if (school && munip) schoolToMunicipalityMap[school] = munip;
+                    });
+
+                    if (sheetEmployees.length > 0) {
+                        uploadedSheets.push({ name: sheetName, employees: sheetEmployees });
+                    }
                 });
 
                 autoFoundInspectors = Array.from(inspectorSet).sort();
@@ -575,13 +647,15 @@
 
                 document.getElementById('file-status-indicator').classList.remove('hidden');
                 document.getElementById('file-status-indicator').classList.add('flex');
-                document.getElementById('file-status-text').innerText = `تم استيراد ${masterRawEmployees.length} موظفاً بنجاح!`;
+                document.getElementById('file-status-text').innerText =
+                    `تم استيراد ${masterRawEmployees.length} موظفاً من ${uploadedSheets.length} ورقة بنجاح!`;
 
                 populateAutoInspectorsSelect();
                 populateRanksCheckboxes();
                 populateMunicipalitiesSelect();
                 populateViewerInspectorFilter();
                 updateOverdueBadgeCount();
+                renderViewerTable(true);
             };
             reader.readAsArrayBuffer(file);
         }
@@ -896,38 +970,92 @@
 
         function populateViewerInspectorFilter() {
             const select = document.getElementById('viewer-filter-inspector');
-            select.innerHTML = '<option value="">جميع أوراق المقاطعات</option>';
-            masterDraftSheets.forEach(s => {
-                select.innerHTML += `<option value="${s.id}">${s.inspectorName}</option>`;
-            });
-        }
+            const previous = select.value;
+            select.innerHTML = '';
 
-        // Return Employees based on current selection in Inspector Filter
-        function getViewerCurrentEmployees() {
-            const selectedSheetId = document.getElementById('viewer-filter-inspector').value;
+            select.appendChild(new Option('جميع أوراق المقاطعات', ''));
 
-            if (selectedSheetId) {
-                const sheet = masterDraftSheets.find(s => s.id == selectedSheetId);
-                return sheet ? sheet.employees : [];
-            } else {
-                // "جميع أوراق المقاطعات" selected:
-                // If sheets exist in draft master, gather all employees across sheets (removing duplicate employee references)
-                if (masterDraftSheets.length > 0) {
-                    const mergedMap = new Map();
-                    masterDraftSheets.forEach(s => {
-                        s.employees.forEach(emp => {
-                            mergedMap.set(emp.id, emp);
-                        });
-                    });
-                    return Array.from(mergedMap.values());
-                } else {
-                    // Fallback to all loaded employees from uploaded Excel file
-                    return masterRawEmployees;
-                }
+            if (uploadedSheets.length > 0) {
+                const grp = document.createElement('optgroup');
+                grp.label = 'أوراق الملف المرفوع';
+                uploadedSheets.forEach((sh, i) => {
+                    grp.appendChild(new Option(`${sh.name} (${sh.employees.length})`, `file:${i}`));
+                });
+                select.appendChild(grp);
             }
+
+            if (masterDraftSheets.length > 0) {
+                const grp = document.createElement('optgroup');
+                grp.label = 'المقاطعات المحفوظة في الخلفية';
+                masterDraftSheets.forEach(sh => {
+                    grp.appendChild(new Option(`${sh.inspectorName} (${sh.employees.length})`, `draft:${sh.id}`));
+                });
+                select.appendChild(grp);
+            }
+
+            // الحفاظ على الاختيار السابق إن كان لا يزال متاحاً
+            const stillExists = Array.from(select.options).some(o => o.value === previous);
+            select.value = stillExists ? previous : '';
         }
 
-        function renderViewerTable() {
+        // Return Employees based on current selection in Inspector/Sheet Filter
+        function getViewerCurrentEmployees() {
+            const selected = document.getElementById('viewer-filter-inspector').value;
+
+            if (selected.startsWith('file:')) {
+                const sh = uploadedSheets[parseInt(selected.slice(5), 10)];
+                return sh ? sh.employees : [];
+            }
+
+            if (selected.startsWith('draft:')) {
+                const id = selected.slice(6);
+                const sh = masterDraftSheets.find(x => String(x.id) === id);
+                return sh ? sh.employees : [];
+            }
+
+            // "جميع أوراق المقاطعات": كل موظفي كل أوراق الملف المرفوع
+            if (uploadedSheets.length > 0) {
+                return masterRawEmployees;
+            }
+
+            // لا يوجد ملف مرفوع: ندمج المقاطعات المحفوظة (إن وجدت)
+            if (masterDraftSheets.length > 0) {
+                const mergedMap = new Map();
+                masterDraftSheets.forEach(sh => sh.employees.forEach(emp => mergedMap.set(emp.id, emp)));
+                return Array.from(mergedMap.values());
+            }
+
+            return masterRawEmployees;
+        }
+
+        function changeViewerPage(action) {
+            if (action === 'first') viewerCurrentPage = 1;
+            else if (action === 'prev') viewerCurrentPage = Math.max(1, viewerCurrentPage - 1);
+            else if (action === 'next') viewerCurrentPage = Math.min(viewerTotalPages, viewerCurrentPage + 1);
+            else if (action === 'last') viewerCurrentPage = viewerTotalPages;
+            renderViewerTable();
+            document.getElementById('viewer-table-tbody').closest('.overflow-hidden')
+                .scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderViewerPagination(totalItems) {
+            const from = totalItems === 0 ? 0 : (viewerCurrentPage - 1) * VIEWER_PAGE_SIZE + 1;
+            const to = Math.min(viewerCurrentPage * VIEWER_PAGE_SIZE, totalItems);
+
+            document.getElementById('viewer-page-summary').innerText =
+                totalItems === 0 ? 'لا توجد بيانات للعرض' : `عرض الموظفين من ${from} إلى ${to} من أصل ${totalItems}`;
+            document.getElementById('viewer-page-indicator').innerText =
+                `صفحة ${viewerCurrentPage} من ${viewerTotalPages}`;
+
+            const atFirst = viewerCurrentPage <= 1;
+            const atLast = viewerCurrentPage >= viewerTotalPages;
+            document.getElementById('btn-page-first').disabled = atFirst;
+            document.getElementById('btn-page-prev').disabled = atFirst;
+            document.getElementById('btn-page-next').disabled = atLast;
+            document.getElementById('btn-page-last').disabled = atLast;
+        }
+
+        function renderViewerTable(resetPage = false) {
             const tbody = document.getElementById('viewer-table-tbody');
             const search = document.getElementById('viewer-search-input').value.toLowerCase().trim();
             const statusFilter = document.getElementById('viewer-filter-status').value;
@@ -964,12 +1092,22 @@
             document.getElementById('stat-viewer-updated').innerText = updatedCount;
             document.getElementById('stat-viewer-deg12').innerText = degree12Count;
 
+            // Pagination: 10 employees per page
+            viewerTotalPages = Math.max(1, Math.ceil(filtered.length / VIEWER_PAGE_SIZE));
+            if (resetPage) viewerCurrentPage = 1;
+            viewerCurrentPage = Math.min(Math.max(1, viewerCurrentPage), viewerTotalPages);
+            renderViewerPagination(filtered.length);
+
             if (filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400">لا توجد سجلات مطابقة للبحث أو التصفية الحالية</td></tr>';
                 return;
             }
 
-            filtered.forEach((emp, index) => {
+            const pageStart = (viewerCurrentPage - 1) * VIEWER_PAGE_SIZE;
+            const pageItems = filtered.slice(pageStart, pageStart + VIEWER_PAGE_SIZE);
+
+            pageItems.forEach((emp, i) => {
+                const index = pageStart + i;
                 const status = checkInspectionOverdueStatus(emp.eduScoreDate);
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
