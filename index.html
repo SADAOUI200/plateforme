@@ -436,7 +436,7 @@
                         <i class="fa-solid fa-clock-rotate-left"></i>
                     </div>
                     <div>
-                        <span class="text-xs font-bold text-slate-500 block">زيارات متأخرة (> سنتين)</span>
+                        <span class="text-xs font-bold text-slate-500 block">زيارات متأخرة (سنتان فأكثر)</span>
                         <span id="stat-viewer-overdue" class="text-xl font-black text-rose-600">0</span>
                     </div>
                 </div>
@@ -477,7 +477,7 @@
                     <select id="viewer-filter-status" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable(true)">
                         <option value="all">جميع الزيارات والموظفين</option>
                         <option value="trainees">المتربصون فقط</option>
-                        <option value="overdue">الزيارات المتأخرة فقط (> سنتين)</option>
+                        <option value="overdue">الزيارات المتأخرة فقط (سنتان فأكثر)</option>
                         <option value="valid">الزيارات المحينة فقط</option>
                     </select>
 
@@ -1123,23 +1123,98 @@
                    rank.includes('متربص');
         }
 
+        // ===== Inspection status: calendar-accurate years / months / days (overdue = 2 years or more) =====
+        const _inspectionStatusCache = new Map();
+        const _MS_DAY = 86400000;
+
+        function _makeDate(y, mo, d) {
+            const dt = new Date(y, mo - 1, d);
+            return (dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d) ? dt : null;
+        }
+
+        function parseVisitDate(str) {
+            const t = String(str).trim();
+            let m = t.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+            if (m) return _makeDate(+m[1], +m[2], +m[3]);
+            m = t.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
+            if (m) return _makeDate(+m[3], +m[2], +m[1]); // day-first (DD/MM/YYYY)
+            const d = new Date(t);
+            return isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+
+        function _addMonthsClamped(from, n) {
+            const total = from.getFullYear() * 12 + from.getMonth() + n;
+            const y = Math.floor(total / 12);
+            const mo = total - y * 12;
+            const dim = new Date(y, mo + 1, 0).getDate();
+            return new Date(y, mo, Math.min(from.getDate(), dim));
+        }
+
+        function computeElapsedYMD(from, to) {
+            let months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+            let anchor = _addMonthsClamped(from, months);
+            if (anchor > to) {
+                months--;
+                anchor = _addMonthsClamped(from, months);
+            }
+            const days = Math.round((Date.UTC(to.getFullYear(), to.getMonth(), to.getDate()) -
+                                     Date.UTC(anchor.getFullYear(), anchor.getMonth(), anchor.getDate())) / _MS_DAY);
+            return { years: Math.floor(months / 12), months: months % 12, days: days };
+        }
+
         function checkInspectionOverdueStatus(dateStr) {
-            if (!dateStr || dateStr.trim() === '') {
-                return { overdue: true, text: 'غير مسجل', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold' };
-            }
-            const visitDate = new Date(dateStr);
-            if (isNaN(visitDate.getTime())) {
-                return { overdue: true, text: 'تاريخ غير صالح', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold' };
-            }
+            const key = dateStr == null ? '' : String(dateStr);
+            const cached = _inspectionStatusCache.get(key);
+            if (cached) return cached;
 
-            const diffTime = Math.abs(TODAY - visitDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 730) {
-                return { overdue: true, text: 'متأخر (> سنتين)', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold' };
+            let result;
+            if (key.trim() === '') {
+                result = { overdue: true, text: 'غير مسجل', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold',
+                           ts: null, years: null, months: null, days: null, durationText: '' };
             } else {
-                return { overdue: false, text: 'محيّن', badgeClass: 'bg-emerald-100 text-emerald-800 font-bold' };
+                const visitDate = parseVisitDate(key);
+                if (!visitDate) {
+                    result = { overdue: true, text: 'تاريخ غير صالح', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold',
+                               ts: null, years: null, months: null, days: null, durationText: '' };
+                } else {
+                    const today = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate());
+                    if (visitDate > today) {
+                        result = { overdue: false, text: 'محيّن', badgeClass: 'bg-emerald-100 text-emerald-800 font-bold',
+                                   ts: visitDate.getTime(), years: 0, months: 0, days: 0, durationText: 'تاريخ لاحق لليوم' };
+                    } else {
+                        const el = computeElapsedYMD(visitDate, today);
+                        const overdue = el.years >= 2;
+                        result = {
+                            overdue: overdue,
+                            text: overdue ? 'متأخر (سنتان فأكثر)' : 'محيّن',
+                            badgeClass: overdue ? 'bg-rose-100 text-rose-800 font-extrabold' : 'bg-emerald-100 text-emerald-800 font-bold',
+                            ts: visitDate.getTime(),
+                            years: el.years, months: el.months, days: el.days,
+                            durationText: `${el.years} سنة · ${el.months} شهر · ${el.days} يوم`
+                        };
+                    }
+                }
             }
+            _inspectionStatusCache.set(key, result);
+            return result;
+        }
+
+        function statusCellHtml(st, py) {
+            const dur = st.durationText
+                ? `<div class="mt-1 text-[11px] font-bold text-slate-600 whitespace-nowrap">${st.durationText}</div>`
+                : '';
+            return `<span class="px-2 ${py || 'py-0.5'} rounded-full text-xs ${st.badgeClass}">${st.text}</span>${dur}`;
+        }
+
+        // Oldest inspection first (unrecorded / invalid dates first), stable for equal dates
+        function sortByInspectionDateAsc(list) {
+            const keyed = list.map((emp, i) => ({
+                emp: emp,
+                i: i,
+                ts: (() => { const t = checkInspectionOverdueStatus(emp.eduScoreDate).ts; return t === null ? -Infinity : t; })()
+            }));
+            keyed.sort((x, y) => (x.ts - y.ts) || (x.i - y.i));
+            return keyed.map(k => k.emp);
         }
 
         function updateDistrictEmployeePreview() {
@@ -1147,7 +1222,7 @@
             const countElem = document.getElementById('preview-employees-count');
             tbody.innerHTML = '';
 
-            const matches = getMatchingEmployeesForCurrentDistrict();
+            const matches = sortByInspectionDateAsc(getMatchingEmployeesForCurrentDistrict());
             countElem.innerText = matches.length;
 
             if (matches.length === 0) {
@@ -1169,7 +1244,7 @@
                     <td class="p-2.5 text-slate-700">${emp.school || '-'} (${emp.municipality || '-'})</td>
                     <td class="p-2.5 font-black text-indigo-700">${emp.eduScore || '-'}</td>
                     <td class="p-2.5">${emp.eduScoreDate || 'غير مسجل'}</td>
-                    <td class="p-2.5"><span class="px-2 py-0.5 rounded-full text-xs ${status.badgeClass}">${status.text}</span></td>
+                    <td class="p-2.5">${statusCellHtml(status)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1337,7 +1412,7 @@
                 sourcePool = Array.from(savedMap.values());
             }
 
-            const matches = sourcePool.filter(emp => {
+            const matches = sortByInspectionDateAsc(sourcePool.filter(emp => {
                 const matchesText = 
                     (emp.fullname && emp.fullname.toLowerCase().includes(q)) ||
                     (emp.surname && emp.surname.toLowerCase().includes(q)) ||
@@ -1352,7 +1427,7 @@
 
                 const inspectors = findInspectorsForEmployee(emp);
                 return inspectors.some(ins => ins.toLowerCase().includes(q));
-            });
+            }));
 
             tbody.innerHTML = '';
             matchesCount.innerText = `${matches.length} نتيجة`;
@@ -1388,7 +1463,7 @@
                     <td class="p-2.5 font-black text-slate-800">${emp.degree || '-'}</td>
                     <td class="p-2.5 text-slate-700 font-medium">${emp.school || '-'} (${emp.municipality || '-'})</td>
                     <td class="p-2.5">${inspectorHtml}</td>
-                    <td class="p-2.5"><span class="px-2 py-0.5 rounded-full text-xs ${status.badgeClass}">${status.text}</span></td>
+                    <td class="p-2.5">${statusCellHtml(status)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1462,6 +1537,7 @@
 
             const rankMap = {};
             const schoolMap = {};
+            const degreeMap = {};
 
             sheet.employees.forEach(emp => {
                 if (isEmployeeTrainee(emp)) trainees++;
@@ -1470,6 +1546,12 @@
                 const st = checkInspectionOverdueStatus(emp.eduScoreDate);
                 if (st.overdue) overdueCount++;
                 else updatedCount++;
+
+                const dKey = String(emp.degree == null ? '' : emp.degree).trim() || 'غير محددة';
+                const dEntry = degreeMap[dKey] || (degreeMap[dKey] = { total: 0, confirmed: 0, trainees: 0, updated: 0, overdue: 0 });
+                dEntry.total++;
+                if (isEmployeeTrainee(emp)) dEntry.trainees++; else dEntry.confirmed++;
+                if (st.overdue) dEntry.overdue++; else dEntry.updated++;
 
                 const r = emp.rank || 'رتبة غير محددة';
                 rankMap[r] = (rankMap[r] || 0) + 1;
@@ -1529,7 +1611,7 @@
                                     <th style="border: 1px solid #475569; padding: 6px;">المرسمون</th>
                                     <th style="border: 1px solid #475569; padding: 6px;">الدرجة 12</th>
                                     <th style="border: 1px solid #475569; padding: 6px;">زيارات محيّنة</th>
-                                    <th style="border: 1px solid #475569; padding: 6px;">زيارات متأخرة (> سنتين)</th>
+                                    <th style="border: 1px solid #475569; padding: 6px;">زيارات متأخرة (سنتان فأكثر)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1546,9 +1628,58 @@
                         </table>
                     </div>
 
+                    ${(() => {
+                        const entries = Object.entries(degreeMap).sort(([a], [b]) => {
+                            const na = parseFloat(a), nb = parseFloat(b);
+                            const fa = !isNaN(na), fb = !isNaN(nb);
+                            if (fa && fb) return na - nb;
+                            if (fa) return -1;
+                            if (fb) return 1;
+                            return a.localeCompare(b, 'ar');
+                        });
+                        const cell = 'border: 1px solid #94a3b8; padding: 5px;';
+                        const rows = entries.map(([deg, v]) => `
+                                <tr style="break-inside: avoid; page-break-inside: avoid;">
+                                    <td style="${cell} font-weight: 800; background-color: #f8fafc;">${deg === 'غير محددة' ? deg : 'الدرجة ' + deg}</td>
+                                    <td style="${cell} font-weight: 900; color: #312e81;">${v.total}</td>
+                                    <td style="${cell} font-weight: 800;">${v.confirmed}</td>
+                                    <td style="${cell} font-weight: 800; color: #0284c7;">${v.trainees}</td>
+                                    <td style="${cell} font-weight: 800; color: #16a34a;">${v.updated}</td>
+                                    <td style="${cell} font-weight: 800; color: #dc2626;">${v.overdue}</td>
+                                </tr>`).join('');
+                        const totalRow = `
+                                <tr style="background-color: #e2e8f0; font-weight: 900; break-inside: avoid; page-break-inside: avoid;">
+                                    <td style="${cell}">المجموع</td>
+                                    <td style="${cell} color: #312e81;">${totalEmps}</td>
+                                    <td style="${cell}">${totalEmps - trainees}</td>
+                                    <td style="${cell} color: #0284c7;">${trainees}</td>
+                                    <td style="${cell} color: #16a34a;">${updatedCount}</td>
+                                    <td style="${cell} color: #dc2626;">${overdueCount}</td>
+                                </tr>`;
+                        return `
+                    <div style="margin-bottom: 16px; break-inside: avoid; page-break-inside: avoid;">
+                        <h3 style="font-size: 11.5pt; font-weight: 800; margin-bottom: 8px; color: #1e293b; border-right: 4px solid #4f46e5; padding-right: 8px;">
+                            ثانياً: الإحصائيات الدقيقة للموظفين حسب الدرجة
+                        </h3>
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 9.5pt;">
+                            <thead>
+                                <tr style="background-color: #e2e8f0; font-weight: 800;">
+                                    <th style="${cell}">الدرجة</th>
+                                    <th style="${cell}">عدد الموظفين</th>
+                                    <th style="${cell}">المرسمون</th>
+                                    <th style="${cell}">المتربصون</th>
+                                    <th style="${cell}">زيارات محيّنة</th>
+                                    <th style="${cell}">زيارات متأخرة (سنتان فأكثر)</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows || `<tr><td colspan="6" style="${cell}">لا توجد بيانات</td></tr>`}${rows ? totalRow : ''}</tbody>
+                        </table>
+                    </div>`;
+                    })()}
+
                     <div style="margin-bottom: 16px;">
                         <h3 style="font-size: 11.5pt; font-weight: 800; margin-bottom: 8px; color: #1e293b; border-right: 4px solid #4f46e5; padding-right: 8px;">
-                            ثانياً: التعداد الإجمالي للموظفين حسب الرتب
+                            ثالثاً: التعداد الإجمالي للموظفين حسب الرتب
                         </h3>
                         <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 9pt;">
                             <thead>
@@ -1599,7 +1730,7 @@
 
                         const heading = `
                         <h3 style="font-size: 11.5pt; font-weight: 800; margin-bottom: 8px; color: #1e293b; border-right: 4px solid #4f46e5; padding-right: 8px; break-after: avoid; page-break-after: avoid;">
-                            ثالثاً: قائمة المؤسسات والبلديات التابعة للمقاطعة التفتيشية
+                            رابعاً: قائمة المؤسسات والبلديات التابعة للمقاطعة التفتيشية
                         </h3>`;
 
                         const thead = `
@@ -1806,7 +1937,7 @@
             let degree12Count = 0;
             let traineeCount = 0;
 
-            const filtered = sourceList.filter(emp => {
+            const filtered = sortByInspectionDateAsc(sourceList.filter(emp => {
                 const status = checkInspectionOverdueStatus(emp.eduScoreDate);
                 const isTrainee = isEmployeeTrainee(emp);
 
@@ -1832,7 +1963,7 @@
                 let matchesNature = !natureFilter || (emp.schoolNature && emp.schoolNature === natureFilter);
 
                 return matchesSearch && matchesStatus && matchesNature;
-            });
+            }));
 
             document.getElementById('stat-viewer-total').innerText = totalCount;
             document.getElementById('stat-viewer-trainees').innerText = traineeCount;
@@ -1871,7 +2002,7 @@
                     <td class="p-3 text-slate-700 font-semibold">${emp.school || '-'} (${emp.municipality || '-'})</td>
                     <td class="p-3 font-black text-indigo-700">${emp.eduScore || '-'}</td>
                     <td class="p-3 font-medium">${emp.eduScoreDate || 'غير مسجل'}</td>
-                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${status.badgeClass}">${status.text}</span></td>
+                    <td class="p-3">${statusCellHtml(status, 'py-1')}</td>
                     <td class="p-3 text-center">
                         <button onclick="openInspectionUpdateModal(${emp.id})" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-lg border border-indigo-200 transition flex items-center gap-1 mx-auto">
                             <i class="fa-solid fa-pen"></i> تحيين
@@ -1931,7 +2062,7 @@
         }
 
         function exportCurrentViewerDataExcel() {
-            const currentData = getViewerCurrentEmployees();
+            const currentData = sortByInspectionDateAsc(getViewerCurrentEmployees());
             if (currentData.length === 0) {
                 alert("لا توجد بيانات معروضة للتصدير!");
                 return;
@@ -1948,7 +2079,8 @@
                 "البلدية": emp.municipality,
                 "النقطة التربوية": emp.eduScore,
                 "تاريخ النقطة التربوية": emp.eduScoreDate,
-                "حالة التفتيش": checkInspectionOverdueStatus(emp.eduScoreDate).text
+                "حالة التفتيش": checkInspectionOverdueStatus(emp.eduScoreDate).text,
+                "المدة منذ آخر زيارة": checkInspectionOverdueStatus(emp.eduScoreDate).durationText
             }));
 
             const ws = XLSX.utils.json_to_sheet(exportRows);
