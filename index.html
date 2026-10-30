@@ -3,1383 +3,1281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة إدارة الموظفين والمتابعة التفتيشية</title>
-    <!-- Font Awesome -->
+    <title>منصة تشكيل المقاطعات التفتيشية والمتابعة الميدانية</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts (Cairo) -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <!-- SheetJS for Excel Reading/Writing -->
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- SheetJS for Excel Reading and Writing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary: #1e3a8a;
-            --primary-light: #3b82f6;
-            --primary-dark: #1e293b;
-            --secondary: #0f766e;
-            --accent: #d97706;
-            --danger: #dc2626;
-            --success: #16a34a;
-            --warning: #f59e0b;
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --border-color: #e2e8f0;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --radius-lg: 16px;
-            --radius-md: 10px;
-            --radius-sm: 6px;
-            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Cairo', sans-serif;
-        }
-
         body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header */
-        header {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-            color: white;
-            padding: 1.25rem 2rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand i {
-            font-size: 2rem;
-            color: #60a5fa;
-        }
-
-        .brand-text h1 {
-            font-size: 1.4rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        .brand-text p {
-            font-size: 0.8rem;
-            opacity: 0.8;
-            font-weight: 400;
-        }
-
-        /* Navigation Tabs */
-        .nav-tabs {
-            display: flex;
-            gap: 8px;
-            background: rgba(255,255,255,0.1);
-            padding: 5px;
-            border-radius: var(--radius-md);
-        }
-
-        .nav-tab {
-            padding: 8px 18px;
-            border-radius: var(--radius-sm);
-            color: white;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            background: transparent;
-        }
-
-        .nav-tab:hover {
-            background: rgba(255,255,255,0.15);
-        }
-
-        .nav-tab.active {
-            background: white;
-            color: var(--primary);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .nav-link-btn {
-            background: rgba(255,255,255,0.18);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .nav-link-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        /* Container */
-        .container {
-            max-width: 1400px;
-            width: 95%;
-            margin: 1.5rem auto;
-            flex: 1;
-        }
-
-        /* Upload Section */
-        .upload-card {
-            background: var(--bg-card);
-            border: 2px dashed #cbd5e1;
-            border-radius: var(--radius-lg);
-            padding: 2.5rem;
-            text-align: center;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        .upload-card:hover, .upload-card.dragover {
-            border-color: var(--primary-light);
-            background-color: #eff6ff;
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            color: var(--primary-light);
-            margin-bottom: 1rem;
-        }
-
-        .file-input {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background-color: #e2e8f0;
-            color: var(--text-main);
-        }
-
-        .btn-secondary:hover {
-            background-color: #cbd5e1;
-        }
-
-        .btn-success {
-            background-color: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background-color: #15803d;
-        }
-
-        .btn-warning {
-            background-color: var(--warning);
-            color: white;
-        }
-
-        .btn-danger {
-            background-color: var(--danger);
-            color: white;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.25rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            padding: 1.25rem;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border-right: 5px solid var(--primary);
-        }
-
-        .stat-card.alert { border-right-color: var(--danger); }
-        .stat-card.success { border-right-color: var(--success); }
-        .stat-card.info { border-right-color: var(--secondary); }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            background: #f1f5f9;
-            color: var(--primary);
-        }
-
-        .stat-card.alert .stat-icon { background: #fee2e2; color: var(--danger); }
-        .stat-card.success .stat-icon { background: #dcfce7; color: var(--success); }
-        .stat-card.info .stat-icon { background: #ccfbf1; color: var(--secondary); }
-
-        .stat-info h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-
-        .stat-info p {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        /* Main Content Views */
-        .view-panel {
-            display: none;
-            background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .view-panel.active {
-            display: block;
-        }
-
-        /* Controls / Filter Bar */
-        .controls-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.25rem;
-            background: #f8fafc;
-            padding: 1rem;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-        }
-
-        .search-box {
-            position: relative;
-            flex: 1;
-            min-width: 250px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 10px 40px 10px 15px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-            outline: none;
-            font-size: 0.9rem;
-            transition: border-color 0.2s;
-        }
-
-        .search-box input:focus {
-            border-color: var(--primary-light);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .search-box i {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-
-        .filter-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        select, input[type="date"] {
-            padding: 9px 12px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-            outline: none;
-            font-size: 0.88rem;
-            background-color: white;
-            color: var(--text-main);
-        }
-
-        /* Table Styling */
-        .table-responsive {
-            overflow-x: auto;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: right;
-            font-size: 0.88rem;
-        }
-
-        thead {
-            background-color: #f1f5f9;
-            color: var(--primary-dark);
-            font-weight: 700;
-        }
-
-        th, td {
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--border-color);
-            white-space: nowrap;
-        }
-
-        tbody tr:hover {
+            font-family: 'Cairo', sans-serif;
             background-color: #f8fafc;
+            color: #0f172a;
         }
-
-        /* Status Badge */
-        .badge {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
-        .badge-danger {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-
-        .badge-success {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-
-        .badge-warning {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-
-        /* Pagination */
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1.25rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .pagination-info {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .pagination-btns {
-            display: flex;
-            gap: 5px;
-        }
-
-        .page-btn {
-            padding: 6px 12px;
-            border: 1px solid var(--border-color);
-            background: white;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-
-        .page-btn:hover:not(:disabled) {
+        .custom-scrollbar::-webkit-scrollbar-track {
             background: #f1f5f9;
-            border-color: #cbd5e1;
         }
-
-        .page-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
         }
-
-        .page-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
-
-        /* Modal Component */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(4px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.3s ease;
+        .page-btn {
+            display: inline-flex; align-items: center; gap: .4rem;
+            padding: .45rem .8rem; font-size: .75rem; font-weight: 700;
+            border-radius: .5rem; border: 1px solid #c7d2fe;
+            background: #eef2ff; color: #4338ca; cursor: pointer;
+            transition: all .15s ease;
         }
-
-        .modal-overlay.active .modal-card {
-            transform: scale(1);
-        }
-
-        .modal-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-
-        .modal-header {
-            padding: 1.25rem 1.75rem;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .modal-header h2 {
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .close-btn {
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 1.3rem;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-
-        .close-btn:hover { opacity: 1; }
-
-        .modal-body {
-            padding: 1.75rem;
-        }
-
-        .section-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--primary);
-            border-right: 4px solid var(--primary);
-            padding-right: 10px;
-            margin: 1.25rem 0 0.8rem 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            background: #f8fafc;
-            padding: 1rem;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .info-label {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            margin-bottom: 2px;
-            font-weight: 600;
-        }
-
-        .info-value {
-            font-size: 0.92rem;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .edit-box {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            padding: 1.25rem;
-            border-radius: var(--radius-md);
-            margin-top: 1rem;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .form-group label {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #166534;
-        }
-
-        .form-group input {
-            padding: 8px 12px;
-            border-radius: var(--radius-sm);
-            border: 1px solid #86efac;
-            outline: none;
-            font-weight: 600;
-        }
-
-        .modal-footer {
-            padding: 1rem 1.75rem;
-            background: #f8fafc;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .tag {
-            font-size: 0.72rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            background: #e2e8f0;
-            color: var(--text-muted);
-        }
-
-        /* Print styles */
+        .page-btn:hover:not(:disabled) { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+        .page-btn:disabled { opacity: .45; cursor: not-allowed; background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
+        
         @media print {
-            header, .nav-tabs, .upload-card, .controls-bar, .pagination-container, .btn, .no-print {
-                display: none !important;
+            .no-print, header, main, #update-modal, #tech-card-modal-backdrop { 
+                display: none !important; 
             }
-            body { background: white; color: black; }
-            .container { width: 100%; max-width: 100%; margin: 0; padding: 0; }
-            .view-panel { box-shadow: none; padding: 0; border: none; display: block !important; }
-            .table-responsive { border: none; overflow: visible; }
-            table { border: 1px solid #000; font-size: 10pt; }
-            th, td { border: 1px solid #000; padding: 6px; }
-            .print-header {
+            body { 
+                background: white !important; 
+                color: black !important; 
+                font-family: 'Cairo', sans-serif !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            #printable-tech-card-wrapper {
                 display: block !important;
-                text-align: center;
-                margin-bottom: 20px;
+                position: static !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
             }
         }
-
-        .print-header { display: none; }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col">
 
-    <!-- Header -->
-    <header>
-        <div class="brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            <div class="brand-text">
-                <h1>منصة المتابعة التفتيشية وسجلات الموظفين</h1>
-                <p>مديرية التربية - نظام إدارة المقاطعات والزيارات الميدانية</p>
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-slate-900 via-brand-900 to-indigo-950 text-white shadow-lg sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <div class="w-12 h-12 bg-indigo-600/30 border border-indigo-400/30 rounded-2xl flex items-center justify-center text-indigo-300 text-2xl shadow-inner">
+                    <i class="fa-solid fa-sitemap"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-white">منصة تشكيل المقاطعات التفتيشية والمتابعة</h1>
+                    <p class="text-xs text-indigo-200/80 font-medium">مديرية التربية - نظام إدارة وإسناد المقاطعات والزيارات الميدانية</p>
+                </div>
             </div>
-        </div>
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('main-view')">
-                <i class="fa-solid fa-users"></i> سجل الموظفين
-            </button>
-            <button class="nav-tab" onclick="switchTab('reports-view')">
-                <i class="fa-solid fa-chart-pie"></i> بوابة التقارير والتفتيش
-                <span id="overdue-badge-count" class="badge badge-danger" style="display:none;">0</span>
-            </button>
-            <!-- رابط صفحة المقاطعات والإسناد المستقلة -->
-            <a href="districts.html" class="nav-tab nav-link-btn">
-                <i class="fa-solid fa-sitemap"></i> إدارة المقاطعات والإسناد
-                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.75rem; margin-right: 4px;"></i>
-            </a>
+
+            <!-- Tabs Navigation -->
+            <nav class="flex bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/60 shadow-inner">
+                <button id="nav-btn-builder" onclick="switchTab('builder')" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-folder-plus"></i>
+                    <span>تشكيل المقاطعات</span>
+                </button>
+                <button id="nav-btn-viewer" onclick="switchTab('viewer')" class="px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>المعاينة والمتابعة التفتيشية</span>
+                    <span id="badge-overdue" class="hidden px-2 py-0.5 text-xs bg-rose-500 text-white font-extrabold rounded-full">0</span>
+                </button>
+            </nav>
         </div>
     </header>
 
-    <div class="container">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-        <!-- Upload Card -->
-        <div class="upload-card" id="drop-zone">
-            <input type="file" id="excel-file-input" class="file-input" accept=".xlsx, .xls">
-            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-            <h3>قم بسحب وإسقاط ملف إكسل الموظفين هنا أو اضغط للاختيار</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">
-                يدعم ملفات XLSX المعتمدة في قطاع التربية (يتم تلقائياً استثناء الموظفين البالغين للدرجة 12)
-            </p>
-            <div id="file-info" style="margin-top: 10px; font-weight: 700; color: var(--success); display: none;">
-                <i class="fa-solid fa-circle-check"></i> <span id="file-info-text">تم تحميل الملف بنجاح!</span>
+        <!-- Excel File Upload Section -->
+        <section class="no-print bg-white rounded-2xl border-2 border-dashed border-indigo-200 hover:border-indigo-400 p-6 mb-8 text-center transition-all duration-300 shadow-sm hover:shadow-md relative group cursor-pointer" id="drop-zone">
+            <input type="file" id="excel-file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept=".xlsx, .xls">
+            <div class="flex flex-col items-center justify-center space-y-3">
+                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">قم بسحب وإسقاط ملف إكسل الموظفين المرجعي هنا، أو اضغط للتصفح</h2>
+                    <p class="text-xs text-slate-500 mt-1">يتم قراءة جميع أوراق الملف (Sheets) مع دعم استخراج طبيعة المؤسسة (العمود AQ) وقائمة المواد (العمود AU)</p>
+                </div>
+                <div id="file-status-indicator" class="hidden items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold mt-2">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span id="file-status-text">تم تحميل الملف بنجاح</span>
+                </div>
             </div>
+        </section>
+
+        <!-- TAB 1: DISTRICT BUILDER WIZARD -->
+        <div id="tab-builder-content" class="space-y-6">
+
+            <!-- FRAME 1: INSPECTOR SELECTION -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm">1</div>
+                    <h3 class="text-base font-extrabold text-slate-800">تحديد مفتش المقاطعة التفتيشية</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">اختيار من قائمة المفتشين (المستخرجة تلقائياً من حقل الرتبة):</label>
+                        <select id="select-inspector-auto" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="handleAutoInspectorSelect(this.value)">
+                            <option value="">-- اختر المفتش --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">أو إدراج اسم المفتش يدوياً (متاح دائماً):</label>
+                        <input type="text" id="input-inspector-manual" placeholder="ادخل اسم ولقب المفتش..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="handleManualInspectorInput()">
+                    </div>
+                </div>
+
+                <!-- Subject Selection -->
+                <div id="subject-selection-container" class="hidden mt-4 pt-4 border-t border-slate-100 bg-indigo-50/60 p-4 rounded-xl border border-indigo-100 transition-all duration-200">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fa-solid fa-book-bookmark text-indigo-600 text-sm"></i>
+                        <label class="text-xs font-bold text-indigo-900">تحديد المادة التفتيشية للمفتش (قائمة المواد المستخرجة من العمود AU):</label>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <select id="select-inspector-subject" class="w-full bg-white border border-indigo-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" onchange="handleSubjectSelect(this.value)">
+                            <option value="">-- اختر المادة التفتيشية (اختياري / تصفية حسب المادة) --</option>
+                        </select>
+                        <div class="flex items-center text-xs text-indigo-700">
+                            <span>عند تحديد المادة سيتم تصفية أساتذة ومعلمي هذه المادة التفتيشية تلقائياً.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FRAME 2: RANKS SELECTION -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm">2</div>
+                        <h3 class="text-base font-extrabold text-slate-800">تحديد الرتب التي يشرف عليها المفتش</h3>
+                    </div>
+                    <button type="button" onclick="toggleAllRanks()" class="text-xs font-bold text-indigo-600 hover:text-indigo-800">تحديد/إلغاء الكل</button>
+                </div>
+                <div id="ranks-checkbox-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto custom-scrollbar p-1">
+                    <p class="text-xs text-slate-400 col-span-full text-center py-4">يرجى تحميل ملف إكسل الموظفين المرجعي أولاً</p>
+                </div>
+            </div>
+
+            <!-- FRAME 3: MUNICIPALITY, SCHOOL NATURE & SCHOOLS SELECTION -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm">3</div>
+                    <h3 class="text-base font-extrabold text-slate-800">تحديد البلديات، طبيعة المؤسسات والمؤسسات التابعة للمقاطعة</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div class="md:col-span-5 space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">1. اختر البلدية:</label>
+                                <select id="select-municipality" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="handleMunicipalityOrNatureChange()">
+                                    <option value="">-- اختر البلدية --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">2. طبيعة المؤسسة (العمود AQ):</label>
+                                <select id="select-school-nature" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="handleMunicipalityOrNatureChange()">
+                                    <option value="">-- جميع طبائع المؤسسات --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center text-xs font-bold text-slate-700 mb-1">
+                                <span>قائمة المؤسسات المطابقة:</span>
+                                <button type="button" onclick="addAllCurrentFilteredSchools()" class="text-indigo-600 hover:underline">إضافة كافة المؤسسات المعروضة</button>
+                            </div>
+                            <select id="select-schools-multi" multiple class="w-full h-36 bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-medium text-slate-800 custom-scrollbar focus:outline-none">
+                            </select>
+                            <button type="button" onclick="addSelectedSchoolsToDistrict()" class="w-full mt-2 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs rounded-lg border border-indigo-200 transition">
+                                <i class="fa-solid fa-plus-circle"></i> إضافة المؤسسات المحددة المقاطعة
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Schools Tags Summary -->
+                    <div class="md:col-span-7 bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center border-b border-slate-200 pb-2 mb-3">
+                                <span class="text-xs font-extrabold text-slate-700">المؤسسات المضافة للمقاطعة الحالية:</span>
+                                <span id="count-assigned-schools" class="px-2 py-0.5 bg-indigo-100 text-indigo-700 font-black rounded-full text-xs">0 مؤسسة</span>
+                            </div>
+                            <div id="district-schools-tags" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar p-1">
+                                <span class="text-xs text-slate-400 italic">لم يتم إضافة مؤسسات بعد...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FRAME 4: EMPLOYEES PREVIEW TABLE AND ACTION BUTTONS -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm">4</div>
+                        <h3 class="text-base font-extrabold text-slate-800">القائمة الاسمية للموظفين التابعين للمقاطعة وحالة تفتيشهم</h3>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-500">عدد موظفي المقاطعة الحالية:</span>
+                        <span id="preview-employees-count" class="text-lg font-black text-indigo-600 bg-indigo-50 px-3 py-0.5 rounded-full border border-indigo-200">0</span>
+                    </div>
+                </div>
+
+                <!-- Preview Table -->
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-800 text-white font-bold">
+                            <tr>
+                                <th class="p-2.5">#</th>
+                                <th class="p-2.5">اللقب والاسم</th>
+                                <th class="p-2.5">الرتبة</th>
+                                <th class="p-2.5">المادة</th>
+                                <th class="p-2.5">طبيعة المؤسسة</th>
+                                <th class="p-2.5">الدرجة</th>
+                                <th class="p-2.5">المؤسسة والبلدية</th>
+                                <th class="p-2.5">النقطة التربوية</th>
+                                <th class="p-2.5">تاريخ النقطة</th>
+                                <th class="p-2.5">حالة التفتيش</th>
+                            </tr>
+                        </thead>
+                        <tbody id="district-preview-tbody" class="divide-y divide-slate-200 font-medium bg-slate-50">
+                            <tr>
+                                <td colspan="10" class="text-center py-8 text-slate-400">اختر المفتش والمؤسسات والرتب المعنية لإظهار قائمة موظفي المقاطعة</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                    <button onclick="commitCurrentDistrictSheet()" class="w-full sm:flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>حفظ المقاطعة التفتيشية في الخلفية</span>
+                    </button>
+                    <button onclick="resetDistrictBuilderForm()" class="w-full sm:w-auto px-5 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>إنشاء مقاطعة جديدة (إعادة التعيين)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MASTER WORKBOOK SHEETS SUMMARY AND DYNAMIC EMPLOYEE SEARCH -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-indigo-600"></i>
+                            <span>قائمة أوراق المقاطعات المحفوظة في الخلفية (Draft Master)</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">بعد إتمام جميع المقاطعات، يمكنك استعراض وطباعة البطاقة الفنية لكل مقاطعة أو تصدير الملف كلياً</p>
+                    </div>
+
+                    <button onclick="exportMasterExcelWorkbook()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+                        <i class="fa-solid fa-file-export"></i>
+                        <span>الحفظ الكلي وتصدير ملف المقاطعات (Excel)</span>
+                    </button>
+                </div>
+
+                <!-- DYNAMIC SEARCH COMPONENT -->
+                <div class="bg-gradient-to-br from-indigo-50/90 to-slate-50 border border-indigo-200/80 rounded-2xl p-5 shadow-sm space-y-3">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-sm shadow-sm">
+                                <i class="fa-solid fa-user-magnifying-glass"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-slate-800">البحث الفوري عن موظف في الملف الإجمالي وتحديد المفتش التابع له</h3>
+                                <p class="text-[11px] text-slate-500">ابحث بالاسم، اللقب، الرتبة، المؤسسة، المادة، أو البلدية لمعرفة المفتش المشرف وحالته</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="select-search-scope" class="bg-white border border-indigo-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" onchange="handleMasterEmployeesSearch(document.getElementById('input-search-master-employees').value)">
+                                <option value="all">البحث في كامل الملف الإجمالي المرفوع</option>
+                                <option value="saved">البحث في المقاطعات المحفوظة فقط</option>
+                            </select>
+                            <span id="badge-master-search-count" class="text-xs font-extrabold px-3 py-1.5 rounded-lg bg-white text-indigo-700 border border-indigo-200 shadow-sm">
+                                الملف الإجمالي: 0 موظف
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3.5 text-indigo-500 text-sm"></i>
+                        <input type="text" id="input-search-master-employees" 
+                               placeholder="اكتب اسم أو لقب الموظف، الرتبة، المؤسسة، المادة، أو البلدية للبحث الفوري..." 
+                               class="w-full bg-white border border-indigo-300 rounded-xl pr-10 pl-10 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition"
+                               oninput="handleMasterEmployeesSearch(this.value)">
+                        <button type="button" onclick="clearMasterEmployeesSearch()" class="absolute left-3.5 top-3.5 text-slate-400 hover:text-rose-600 text-sm transition" title="مسح البحث">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div id="master-search-results-box" class="hidden bg-white rounded-xl border border-indigo-200 overflow-hidden shadow-md mt-2">
+                        <div class="px-4 py-2.5 bg-indigo-50/80 border-b border-indigo-100 flex items-center justify-between text-xs font-black text-indigo-950">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-list-check text-indigo-600"></i>
+                                <span>نتائج البحث الديناميكي عن الموظف وتحديد المفتش:</span>
+                            </span>
+                            <span id="master-search-matches-count" class="px-2.5 py-0.5 rounded-full bg-indigo-600 text-white font-extrabold text-xs">0 نتيجة</span>
+                        </div>
+                        <div class="max-h-72 overflow-y-auto custom-scrollbar">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-slate-800 text-white font-bold sticky top-0 shadow-sm">
+                                    <tr>
+                                        <th class="p-2.5">#</th>
+                                        <th class="p-2.5">اللقب والاسم</th>
+                                        <th class="p-2.5">الرتبة</th>
+                                        <th class="p-2.5">المادة</th>
+                                        <th class="p-2.5">طبيعة المؤسسة</th>
+                                        <th class="p-2.5">الدرجة</th>
+                                        <th class="p-2.5">المؤسسة والبلدية</th>
+                                        <th class="p-2.5 bg-indigo-900/90 text-amber-300 font-extrabold">المفتش التابع له هذا الموظف</th>
+                                        <th class="p-2.5">حالة التفتيش</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="master-search-results-tbody" class="divide-y divide-slate-100 font-medium">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saved Sheets Table -->
+                <div>
+                    <h3 class="text-xs font-black text-slate-700 mb-2.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-table-list text-indigo-600"></i>
+                        <span>أوراق المقاطعات المجهزة والمحفوظة (مع إمكانية استعراض وطباعة البطاقة الفنية لكل مقاطعة):</span>
+                    </h3>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-slate-800 text-white font-bold">
+                                <tr>
+                                    <th class="p-3">#</th>
+                                    <th class="p-3">اسم المفتش (الورقة)</th>
+                                    <th class="p-3">المادة</th>
+                                    <th class="p-3">طبيعة المؤسسة</th>
+                                    <th class="p-3">عدد المؤسسات</th>
+                                    <th class="p-3">عدد الموظفين</th>
+                                    <th class="p-3 text-center">الإجراءات والبطاقة الفنية</th>
+                                </tr>
+                            </thead>
+                            <tbody id="master-sheets-tbody" class="divide-y divide-slate-200 font-medium bg-slate-50">
+                                <tr>
+                                    <td colspan="7" class="text-center py-6 text-slate-400">لم يتم حفظ أي ورقة مقاطعة بعد في الخلفية</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Dashboard Stats -->
-        <div class="stats-grid" id="stats-container" style="display: none;">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fa-solid fa-user-group"></i></div>
-                <div class="stat-info">
-                    <h3 id="stat-total">0</h3>
-                    <p>الموظفون المؤهلون (دون الدرجة 12)</p>
+        <!-- TAB 2: INSPECTION VIEWER & UPDATER -->
+        <div id="tab-viewer-content" class="hidden space-y-6">
+            
+            <!-- Statistics Header -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">إجمالي المعروضين</span>
+                        <span id="stat-viewer-total" class="text-xl font-black text-slate-800">0</span>
+                    </div>
                 </div>
-            </div>
-            <div class="stat-card alert">
-                <div class="stat-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                <div class="stat-info">
-                    <h3 id="stat-overdue">0</h3>
-                    <p>لم يزاروا منذ > سنتين</p>
-                </div>
-            </div>
-            <div class="stat-card success">
-                <div class="stat-icon"><i class="fa-solid fa-clipboard-check"></i></div>
-                <div class="stat-info">
-                    <h3 id="stat-visited">0</h3>
-                    <p>زيارات محينة (أقل من سنتين)</p>
-                </div>
-            </div>
-            <div class="stat-card info">
-                <div class="stat-icon"><i class="fa-solid fa-user-slash"></i></div>
-                <div class="stat-info">
-                    <h3 id="stat-excluded">0</h3>
-                    <p>مستثنون (بلغوا الدرجة 12)</p>
-                </div>
-            </div>
-        </div>
 
-        <!-- Printable Document Title -->
-        <div class="print-header">
-            <h2 id="print-title">تقرير تفتيشي</h2>
-            <p id="print-subtitle">تاريخ الاستخراج: <span id="print-date"></span></p>
-        </div>
-
-        <!-- TAB 1: Main Employee Data Table -->
-        <div id="main-view" class="view-panel active">
-            <div class="controls-bar">
-                <div class="search-box">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="search-input" placeholder="بحث بالاسم، اللقب، الرقم الوظيفي، المؤسسة..." oninput="handleSearch()">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">عدد المتربصين</span>
+                        <span id="stat-viewer-trainees" class="text-xl font-black text-sky-600">0</span>
+                    </div>
                 </div>
-                <div class="filter-group">
-                    <!-- فلتر حالة التفتيش -->
-                    <select id="filter-status" onchange="applyFilters()" style="font-weight: 700; border-color: var(--primary-light);">
-                        <option value="">جميع الحالات (محين ومتأخر)</option>
-                        <option value="updated">محين (أقل من سنتين)</option>
-                        <option value="overdue">متأخر (أكثر من سنتين)</option>
-                    </select>
 
-                    <!-- فلتر طبيعة المؤسسة (العمود AQ) -->
-                    <select id="filter-school-nature" onchange="applyFilters()" style="font-weight: 700;">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">زيارات متأخرة (> سنتين)</span>
+                        <span id="stat-viewer-overdue" class="text-xl font-black text-rose-600">0</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">زيارات محيّنة</span>
+                        <span id="stat-viewer-updated" class="text-xl font-black text-emerald-600">0</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 space-x-reverse">
+                    <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 block">الموظفين بالدرجة 12</span>
+                        <span id="stat-viewer-deg12" class="text-xl font-black text-amber-600">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400"></i>
+                    <input type="text" id="viewer-search-input" placeholder="بحث بالاسم، اللقب، المؤسسة، الرتبة، المادة، طبيعة المؤسسة..." class="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="renderViewerTable(true)">
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <select id="viewer-filter-nature" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable(true)">
                         <option value="">جميع طبائع المؤسسات</option>
                     </select>
 
-                    <select id="filter-rank" onchange="applyFilters()">
-                        <option value="">جميع الرتب</option>
+                    <select id="viewer-filter-status" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable(true)">
+                        <option value="all">جميع الزيارات والموظفين</option>
+                        <option value="trainees">المتربصون فقط</option>
+                        <option value="overdue">الزيارات المتأخرة فقط (> سنتين)</option>
+                        <option value="valid">الزيارات المحينة فقط</option>
                     </select>
-                    <select id="filter-subject" onchange="applyFilters()">
-                        <option value="">جميع المواد / التخصصات</option>
-                    </select>
-                    <select id="filter-school" onchange="applyFilters()">
-                        <option value="">جميع المؤسسات</option>
-                    </select>
-                    <button class="btn btn-secondary" onclick="resetFilters()">
-                        <i class="fa-solid fa-rotate"></i> إعادة ضبط
-                    </button>
-                    <!-- تصدير نتائج التصفية فقط -->
-                    <button class="btn btn-success" onclick="exportUpdatedExcel()">
-                        <i class="fa-solid fa-file-excel"></i> تصدير نتائج التصفية
-                    </button>
-                </div>
-            </div>
 
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>اللقب والاسم</th>
-                            <th>الرتبة</th>
-                            <th>الدرجة</th>
-                            <th>طبيعة المؤسسة</th>
-                            <th>المادة / التخصص</th>
-                            <th>المؤسسة</th>
-                            <th>تاريخ آخر زيارة</th>
-                            <th>النقطة الممنوحة</th>
-                            <th>حالة التفتيش</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="employees-table-body">
-                        <tr>
-                            <td colspan="11" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                                <i class="fa-solid fa-file-import" style="font-size: 2rem; margin-bottom: 10px; display:block;"></i>
-                                يرجى تحميل ملف إكسل الموظفين للبدء في عرض واستعراض البيانات
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="pagination-container">
-                <div class="pagination-info" id="pagination-info">عرض 0 إلى 0 من إجمالي 0 سجل</div>
-                <div class="pagination-btns" id="pagination-controls"></div>
-            </div>
-        </div>
-
-        <!-- TAB 2: Inspection Reports Portal -->
-        <div id="reports-view" class="view-panel">
-            <div class="controls-bar">
-                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <h3 style="font-size: 1.1rem; color: var(--primary);"><i class="fa-solid fa-triangle-exclamation" style="color:var(--danger)"></i> الموظفون المعنيون بالتفتيش (تجاوزوا سنتين)</h3>
-                </div>
-                <div class="filter-group">
-                    <select id="report-filter-inspector" onchange="filterReports()">
-                        <option value="">جميع المفتشين (المقاطعات)</option>
+                    <select id="viewer-filter-inspector" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none" onchange="renderViewerTable(true)">
+                        <option value="">جميع أوراق المقاطعات</option>
                     </select>
-                    <select id="report-filter-subject" onchange="filterReports()">
-                        <option value="">تصفية حسب المادة / التخصص</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="window.print()">
-                        <i class="fa-solid fa-print"></i> طباعة التقرير
+
+                    <button onclick="openViewerDistrictTechCard()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition shadow-md flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i>
+                        <span>طباعة البطاقة الفنية للمقاطعة الحالية</span>
                     </button>
-                    <button class="btn btn-success" onclick="exportReportToExcel()">
-                        <i class="fa-solid fa-file-excel"></i> تصدير التقرير الحالي
+
+                    <button onclick="exportCurrentViewerDataExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>تصدير البيانات المعروضة</span>
                     </button>
                 </div>
             </div>
 
-            <div style="margin-bottom: 15px; padding: 10px 15px; background: #fef2f2; border-right: 4px solid var(--danger); border-radius: var(--radius-sm); font-size: 0.88rem; color: #991b1b;">
-                <strong>ملاحظة النظام:</strong> يتم احتساب التأخر بناءً على مقارنة <code>تاريخ آخر زيارة</code> للموظف مع تاريخ اليوم الحالي (أكثر من 730 يوم - سنتين كاملتين) مع استبعاد كل موظف بلغ الدرجة 12.
-            </div>
+            <!-- Viewer Table -->
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-800 text-white font-bold">
+                            <tr>
+                                <th class="p-3">#</th>
+                                <th class="p-3">اللقب والاسم</th>
+                                <th class="p-3">الرتبة</th>
+                                <th class="p-3">المادة</th>
+                                <th class="p-3">طبيعة المؤسسة</th>
+                                <th class="p-3">الدرجة</th>
+                                <th class="p-3">المؤسسة والبلدية</th>
+                                <th class="p-3">النقطة التربوية</th>
+                                <th class="p-3">تاريخ النقطة</th>
+                                <th class="p-3">حالة التفتيش</th>
+                                <th class="p-3 text-center">تعديل النقطة والتاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="viewer-table-tbody" class="divide-y divide-slate-200 font-medium">
+                            <tr>
+                                <td colspan="11" class="text-center py-10 text-slate-400">يرجى رفع ملف الموظفين أو تحميل أوراق المقاطعات للاستعراض</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>الرقم الوظيفي</th>
-                            <th>اسم ولقب الموظف</th>
-                            <th>المؤسسة المستقبلة</th>
-                            <th>طبيعة المؤسسة</th>
-                            <th>الرتبة</th>
-                            <th>الدرجة</th>
-                            <th>المادة / التخصص</th>
-                            <th>تاريخ آخر زيارة</th>
-                            <th>مدة التأخر</th>
-                            <th>المفتش المشرف (المقاطعة)</th>
-                            <th>إجراء</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reports-table-body">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Modal for Viewing & Editing Employee Details -->
-    <div class="modal-overlay" id="employee-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2><i class="fa-solid fa-id-card"></i> بطاقة معلومات الموظف المكملة</h2>
-                <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body">
-                
-                <div class="edit-box">
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-calendar-check"></i> تاريخ آخر زيارة تفتيشية:</label>
-                        <input type="date" id="modal-edit-date">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-star"></i> النقطة التربوية / الإدارية الممنوحة:</label>
-                        <input type="number" step="0.25" min="0" max="20" id="modal-edit-score" placeholder="مثال: 14.50">
+                <!-- Pagination Bar -->
+                <div id="viewer-pagination" class="no-print flex flex-col lg:flex-row items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3">
+                    <div id="viewer-page-summary" class="text-xs font-bold text-slate-600">لا توجد بيانات للعرض</div>
+                    <div class="flex flex-wrap items-center justify-center gap-2">
+                        <button type="button" id="btn-page-first" onclick="changeViewerPage('first')" class="page-btn">
+                            <i class="fa-solid fa-angles-right"></i><span>الصفحة الأولى</span>
+                        </button>
+                        <button type="button" id="btn-page-prev" onclick="changeViewerPage('prev')" class="page-btn">
+                            <i class="fa-solid fa-angle-right"></i><span>السابق</span>
+                        </button>
+                        <span id="viewer-page-indicator" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-800">صفحة 1 من 1</span>
+                        <button type="button" id="btn-page-next" onclick="changeViewerPage('next')" class="page-btn">
+                            <span>التالي</span><i class="fa-solid fa-angle-left"></i>
+                        </button>
+                        <button type="button" id="btn-page-last" onclick="changeViewerPage('last')" class="page-btn">
+                            <span>الصفحة الأخيرة</span><i class="fa-solid fa-angles-left"></i>
+                        </button>
                     </div>
                 </div>
-
-                <div class="section-title"><i class="fa-solid fa-user"></i> المعلومات الشخصية</div>
-                <div class="info-grid">
-                    <div class="info-item"><span class="info-label">اللقب والاسم:</span><span class="info-value" id="m-fullname">-</span></div>
-                    <div class="info-item"><span class="info-label">الاسم باللاتينية:</span><span class="info-value" id="m-latin-name">-</span></div>
-                    <div class="info-item"><span class="info-label">الرقم الوظيفي:</span><span class="info-value" id="m-job-id">-</span></div>
-                    <div class="info-item"><span class="info-label">رقم التعريف الوطني (NIN):</span><span class="info-value" id="m-nin">-</span></div>
-                    <div class="info-item"><span class="info-label">تاريخ ومكان الازدياد:</span><span class="info-value" id="m-birth">-</span></div>
-                    <div class="info-item"><span class="info-label">الجنس / فصيلة الدم:</span><span class="info-value" id="m-gender-blood">-</span></div>
-                    <div class="info-item"><span class="info-label">العنوان الشخصي:</span><span class="info-value" id="m-address">-</span></div>
-                    <div class="info-item"><span class="info-label">الهاتف المحمول:</span><span class="info-value" id="m-phone">-</span></div>
-                </div>
-
-                <div class="section-title"><i class="fa-solid fa-briefcase"></i> المسار الإداري والمهني</div>
-                <div class="info-grid">
-                    <div class="info-item"><span class="info-label">الرتبة الحالية:</span><span class="info-value" id="m-rank">-</span></div>
-                    <div class="info-item"><span class="info-label">المادة / التخصص:</span><span class="info-value" id="m-subject">-</span></div>
-                    <div class="info-item"><span class="info-label">المؤسسة والبلدية:</span><span class="info-value" id="m-school">-</span></div>
-                    <div class="info-item"><span class="info-label">طبيعة المؤسسة:</span><span class="info-value" id="m-school-nature">-</span></div>
-                    <div class="info-item"><span class="info-label">الوضعية الإدارية والدرجة:</span><span class="info-value" id="m-status-degree">-</span></div>
-                    <div class="info-item"><span class="info-label">تاريخ التوظيف:</span><span class="info-value" id="m-hire-date">-</span></div>
-                    <div class="info-item"><span class="info-label">تاريخ الترسيم:</span><span class="info-value" id="m-confirmation-date">-</span></div>
-                    <div class="info-item"><span class="info-label">تاريخ التعيين بالمؤسسة:</span><span class="info-value" id="m-school-assign-date">-</span></div>
-                    <div class="info-item"><span class="info-label">صفة التعيين:</span><span class="info-value" id="m-assign-type">-</span></div>
-                </div>
-
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
-                <button class="btn btn-primary" onclick="saveEmployeeChanges()"><i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات</button>
+
+        </div>
+
+    </main>
+
+    <!-- Modal for Technical Card -->
+    <div id="tech-card-modal-backdrop" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 flex items-center justify-center hidden no-print">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full max-h-[92vh] flex flex-col mx-4 overflow-hidden">
+            <!-- Modal Top Bar -->
+            <div class="p-4 bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600/40 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
+                        <i class="fa-solid fa-file-invoice text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black">معاينة وطباعة البطاقة الفنية للمقاطعة التفتيشية</h3>
+                        <p class="text-[11px] text-slate-300">خصص اسم الولاية ونوع الهيكل (مصلحة / مكتب) ثم اضغط طباعة</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="printTechnicalCard()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-lg shadow-md transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i>
+                        <span>طباعة البطاقة الفنية</span>
+                    </button>
+                    <button onclick="closeTechnicalCardModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Customization Settings Toolbar -->
+            <div class="bg-slate-50 border-b border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                    <label class="block font-extrabold text-slate-700 mb-1">اسم الولاية (مديرية التربية لولاية):</label>
+                    <input type="text" id="tech-input-wilaya" placeholder="اكتب اسم الولاية هنا..." 
+                           class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                           oninput="updateTechCardPreview()">
+                </div>
+                <div>
+                    <label class="block font-extrabold text-slate-700 mb-1">الهيكل الإداري المشرف:</label>
+                    <div class="flex items-center gap-4 mt-2 font-bold text-slate-700">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-xs">
+                            <input type="radio" name="tech-service-choice" value="مصلحة" checked onchange="updateTechCardPreview()" class="text-indigo-600 focus:ring-indigo-500">
+                            <span>مصلحة التكوين والتفتيش</span>
+                        </label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-xs">
+                            <input type="radio" name="tech-service-choice" value="مكتب" onchange="updateTechCardPreview()" class="text-indigo-600 focus:ring-indigo-500">
+                            <span>مكتب التكوين والتفتيش</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Printable Preview Container -->
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-100/70 custom-scrollbar flex justify-center">
+                <div id="tech-card-print-target" class="bg-white shadow-lg border border-slate-300 rounded-xl p-8 max-w-[210mm] w-full text-slate-900 font-cairo">
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Application JavaScript Logic -->
+    <!-- Hidden Dedicated Printable Container for Clean @media print -->
+    <div id="printable-tech-card-wrapper" class="hidden">
+    </div>
+
+    <!-- Modal for Updating Score & Date -->
+    <div id="update-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden no-print">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 mx-4 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+                    <span>تحيين النقطة وتاريخ الزيارة التربوية</span>
+                </h3>
+                <button onclick="closeUpdateModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                    <span class="text-xs text-slate-500 font-bold block">الموظف المعني:</span>
+                    <span id="modal-employee-name" class="text-sm font-black text-indigo-900 block">-</span>
+                    <span id="modal-employee-detail" class="text-xs text-indigo-700 block mt-0.5">-</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">النقطة التربوية الممنوحة:</label>
+                    <input type="number" step="0.25" min="0" max="20" id="modal-input-score" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ النقطة التربوية / الزيارة:</label>
+                    <input type="date" id="modal-input-date" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                <button onclick="closeUpdateModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-lg transition">إلغاء</button>
+                <button onclick="saveInspectionUpdate()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg shadow-md transition">حفظ التحيين</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Section -->
     <script>
-        // Global State
-        let rawEmployeesData = [];
-        let excludedEmployeesCount = 0;
-        let filteredEmployees = [];
-        let currentPage = 1;
-        const pageSize = 10;
-        let selectedEmployeeIndex = -1;
+        let masterRawEmployees = [];
+        let autoFoundInspectors = [];
+        let uniqueRanks = [];
+        let uniqueSubjects = [];
+        let uniqueSchoolNatures = [];
+        let uniqueMunicipalities = [];
+        let schoolToMunicipalityMap = {};
+        let schoolToNatureMap = {};
 
-        // Inspectors
-        let inspectors = JSON.parse(localStorage.getItem('platform_inspectors')) || [
-            { id: 1, name: 'أحمد بن علي', spec: 'رياضيات', assignments: [] },
-            { id: 2, name: 'فاطمة الزهراء عثماني', spec: 'لغة عربية', assignments: [] }
-        ];
+        let currentSelectedInspector = "";
+        let currentSelectedSubject = "";
+        let currentSelectedNature = "";
+        let currentSelectedRanks = new Set();
+        let currentAssignedSchools = new Set();
 
-        // System Date (Today)
-        const systemDate = new Date();
+        let masterDraftSheets = [];
+        let uploadedSheets = [];
+
+        const VIEWER_PAGE_SIZE = 10;
+        let viewerCurrentPage = 1;
+        let viewerTotalPages = 1;
+
+        let activeEditEmployeeIndex = -1;
+        let currentTechCardSheet = null;
+
+        const TODAY = new Date();
 
         document.addEventListener('DOMContentLoaded', () => {
             setupDragAndDrop();
         });
 
-        // Tab Switcher
-        function switchTab(tabId) {
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                if (!tab.classList.contains('nav-link-btn')) tab.classList.remove('active');
-            });
-            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+        function switchTab(tab) {
+            const btnBuilder = document.getElementById('nav-btn-builder');
+            const btnViewer = document.getElementById('nav-btn-viewer');
+            const contentBuilder = document.getElementById('tab-builder-content');
+            const contentViewer = document.getElementById('tab-viewer-content');
 
-            event.currentTarget.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-
-            if (tabId === 'reports-view') {
-                renderReportsPortal();
+            if (tab === 'builder') {
+                btnBuilder.className = "px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnViewer.className = "px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50";
+                contentBuilder.classList.remove('hidden');
+                contentViewer.classList.add('hidden');
+            } else {
+                btnViewer.className = "px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnBuilder.className = "px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50";
+                contentViewer.classList.remove('hidden');
+                contentBuilder.classList.add('hidden');
+                renderViewerTable();
             }
         }
 
-        // Drag & Drop File Setup
         function setupDragAndDrop() {
             const dropZone = document.getElementById('drop-zone');
             const fileInput = document.getElementById('excel-file-input');
 
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                dropZone.classList.add('dragover');
+                dropZone.classList.add('border-indigo-500', 'bg-indigo-50/50');
             });
 
             dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('dragover');
+                dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
             });
 
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
-                dropZone.classList.remove('dragover');
+                dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
                 if (e.dataTransfer.files.length) {
                     fileInput.files = e.dataTransfer.files;
-                    handleFileUpload(e.dataTransfer.files[0]);
+                    processUploadedExcel(e.dataTransfer.files[0]);
                 }
             });
 
             fileInput.addEventListener('change', (e) => {
                 if (e.target.files.length) {
-                    handleFileUpload(e.target.files[0]);
+                    processUploadedExcel(e.target.files[0]);
                 }
             });
         }
 
-        // استخراج قيمة الدرجة
-        function getEmployeeDegree(item) {
-            let val = item['الدرجة'] ?? item['درجة'] ?? item['Echelon'] ?? item['ECHELON'] ?? '';
-            if (val === '' && item['AI'] !== undefined) {
-                val = item['AI'];
-            }
-            if (val === null || val === undefined) return '';
-            return String(val).trim();
+        function formatDateValue(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
         }
 
-        // دالة استخراج طبيعة المؤسسة (العمود AQ)
-        function getSchoolNature(item) {
-            let val = item['طبيعة المؤسسة'] ?? item['طبيعة_المؤسسة'] ?? item['Nature Etablissement'] ?? item['NATURE'] ?? '';
-            if (val === '' && item['AQ'] !== undefined) {
-                val = item['AQ'];
+        function extractVal(row, possibleKeys) {
+            for (let key of possibleKeys) {
+                const v = row[key];
+                if (v instanceof Date) {
+                    if (!isNaN(v.getTime())) return formatDateValue(v);
+                    continue;
+                }
+                if (v !== undefined && v !== null && String(v).trim() !== "") {
+                    return String(v).trim();
+                }
             }
-            if (val === null || val === undefined) return '';
-            return String(val).trim();
+            return "";
         }
 
-        // Process Uploaded Excel
-        function handleFileUpload(file) {
+        function normalizeRowKeys(row) {
+            const out = {};
+            Object.keys(row).forEach(k => { out[String(k).trim()] = row[k]; });
+            return out;
+        }
+
+        function processUploadedExcel(file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-                
-                excludedEmployeesCount = 0;
-                let validEmployees = [];
-                let rowCounter = 0;
 
-                jsonData.forEach((item) => {
-                    const degreeStr = getEmployeeDegree(item);
-                    const degreeNum = parseInt(degreeStr, 10);
+                masterRawEmployees = [];
+                uploadedSheets = [];
+                const rankSet = new Set();
+                const inspectorSet = new Set();
+                const munipSet = new Set();
+                const subjectSet = new Set();
+                const natureSet = new Set();
+                schoolToMunicipalityMap = {};
+                schoolToNatureMap = {};
+                let nextId = 1;
 
-                    // استثناء الموظف إذا كان في الدرجة 12
-                    if (degreeNum === 12 || degreeStr === '12') {
-                        excludedEmployeesCount++;
-                        return;
+                const AQ_INDEX = 42;
+                const AU_INDEX = 46;
+
+                workbook.SheetNames.forEach(sheetName => {
+                    const ws = workbook.Sheets[sheetName];
+                    if (!ws) return;
+
+                    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                    if (!aoa || aoa.length === 0) return;
+
+                    const headerRow = aoa[0] || [];
+                    
+                    let aqHeaderKey = '';
+                    if (headerRow.length > AQ_INDEX && headerRow[AQ_INDEX]) {
+                        aqHeaderKey = String(headerRow[AQ_INDEX]).trim();
                     }
 
-                    const schoolNature = getSchoolNature(item);
-
-                    let visitDate = item['تاريخ النقطة التربوية'] || item['تاريخ النقطة الادارية'] || '';
-                    if (visitDate instanceof Date) {
-                        visitDate = visitDate.toISOString().split('T')[0];
-                    } else if (typeof visitDate === 'string' && visitDate.includes('T')) {
-                        visitDate = visitDate.split('T')[0];
+                    let auHeaderKey = '';
+                    if (headerRow.length > AU_INDEX && headerRow[AU_INDEX]) {
+                        auHeaderKey = String(headerRow[AU_INDEX]).trim();
                     }
-                    if (visitDate === '1970-01-01') visitDate = '';
 
-                    let score = item['النقطة التربوية'] || item['النقطة الادارية'] || '';
+                    const jsonRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+                    const sheetEmployees = [];
 
-                    validEmployees.push({
-                        _id: rowCounter++,
-                        ...item,
-                        'الدرجة': degreeStr,
-                        'طبيعة المؤسسة': schoolNature,
-                        'تاريخ النقطة التربوية': visitDate,
-                        'النقطة التربوية': score
+                    jsonRows.forEach((rawRow, rowIndex) => {
+                        const row = normalizeRowKeys(rawRow);
+
+                        let surname = extractVal(row, ['اللقب', 'لقب', 'Nom', 'NOM']);
+                        let firstname = extractVal(row, ['الاسم', 'اسم', 'Prenom', 'PRENOM']);
+                        let rank = extractVal(row, ['الرتبة', 'رتبة', 'Grade', 'GRADE']);
+
+                        if (!surname && !firstname && !rank) return;
+
+                        let school = extractVal(row, ['المؤسسة', 'مؤسسة']);
+                        let munip = extractVal(row, ['البلدية', 'بلدية']);
+                        let degree = extractVal(row, ['الدرجة', 'درجة']);
+                        let eduScore = extractVal(row, ['النقطة التربوية', 'النقطة']);
+                        let eduScoreDate = extractVal(row, ['تاريخ النقطة التربوية', 'تاريخ النقطة']);
+
+                        let schoolNature = '';
+                        if (aoa[rowIndex + 1] && aoa[rowIndex + 1][AQ_INDEX] !== undefined && String(aoa[rowIndex + 1][AQ_INDEX]).trim() !== '') {
+                            schoolNature = String(aoa[rowIndex + 1][AQ_INDEX]).trim();
+                        }
+                        if (!schoolNature && aqHeaderKey && row[aqHeaderKey]) {
+                            schoolNature = String(row[aqHeaderKey]).trim();
+                        }
+                        if (!schoolNature) {
+                            schoolNature = extractVal(row, ['طبيعة المؤسسة', 'طبيعة_المؤسسة', 'طبيعة مؤسسة', 'طبيعة المؤسسه', 'طبيعة', 'AQ']);
+                        }
+                        if (schoolNature) natureSet.add(schoolNature);
+
+                        let subject = '';
+                        if (aoa[rowIndex + 1] && aoa[rowIndex + 1][AU_INDEX] !== undefined && String(aoa[rowIndex + 1][AU_INDEX]).trim() !== '') {
+                            subject = String(aoa[rowIndex + 1][AU_INDEX]).trim();
+                        }
+                        if (!subject && auHeaderKey && row[auHeaderKey]) {
+                            subject = String(row[auHeaderKey]).trim();
+                        }
+                        if (!subject) {
+                            subject = extractVal(row, ['المواد', 'مادة', 'المادة', 'مادة التدريس', 'تخصص', 'التخصص', 'AU']);
+                        }
+                        if (subject) subjectSet.add(subject);
+
+                        if (eduScoreDate && typeof eduScoreDate === 'string' && eduScoreDate.includes('T')) {
+                            eduScoreDate = eduScoreDate.split('T')[0];
+                        }
+
+                        const empObj = {
+                            id: nextId++,
+                            sheetName: sheetName,
+                            surname: surname,
+                            firstname: firstname,
+                            fullname: `${surname} ${firstname}`.trim(),
+                            rank: rank,
+                            subject: subject,
+                            school: school,
+                            schoolNature: schoolNature,
+                            municipality: munip,
+                            degree: degree,
+                            eduScore: eduScore,
+                            eduScoreDate: eduScoreDate,
+                            birthDate: extractVal(row, ['تاريخ الازدياد', 'تاريخ الميلاد']),
+                            phone: extractVal(row, ['الهاتف المحمول', 'الهاتف']),
+                            adminStatus: extractVal(row, ['الوضعية الادارية', 'الوضعية الإدارية']),
+                            hireDate: extractVal(row, ['تاريخ التوظيف']),
+                            assignRankDate: extractVal(row, ['تاريخ التعيين في الرتبة', 'تاريخ التعيين بالرتبة']),
+                            confirmationDate: extractVal(row, ['تاريخ الترسيم']),
+                            schoolAssignDate: extractVal(row, ['تاريخ التعيين في المؤسسة', 'تاريخ التعيين بالمؤسسة']),
+                            assignType: extractVal(row, ['صفة التعيين']),
+                            effectiveDate: extractVal(row, ['تاريخ السريان']),
+                            rawRow: row
+                        };
+
+                        masterRawEmployees.push(empObj);
+                        sheetEmployees.push(empObj);
+
+                        if (rank) {
+                            rankSet.add(rank);
+                            if (rank.includes('مفتش')) {
+                                inspectorSet.add(empObj.fullname + " (" + rank + ")");
+                            }
+                        }
+
+                        if (munip) munipSet.add(munip);
+                        if (school && munip) schoolToMunicipalityMap[school] = munip;
+                        if (school && schoolNature) schoolToNatureMap[school] = schoolNature;
                     });
+
+                    if (sheetEmployees.length > 0) {
+                        uploadedSheets.push({ name: sheetName, employees: sheetEmployees });
+                    }
                 });
 
-                rawEmployeesData = validEmployees;
-                filteredEmployees = [...rawEmployeesData];
+                autoFoundInspectors = Array.from(inspectorSet).sort();
+                uniqueRanks = Array.from(rankSet).sort();
+                uniqueMunicipalities = Array.from(munipSet).sort();
+                uniqueSubjects = Array.from(subjectSet).filter(s => s && s.length > 0).sort();
+                uniqueSchoolNatures = Array.from(natureSet).filter(s => s && s.length > 0).sort();
 
-                // حفظ المؤسسات والتخصصات المستخلصة في localStorage
-                const schools = [...new Set(rawEmployeesData.map(e => e['المؤسسة']).filter(Boolean))];
-                const subjects = [...new Set(rawEmployeesData.map(e => e['المادة']).filter(Boolean))];
-                localStorage.setItem('platform_schools', JSON.stringify(schools));
-                localStorage.setItem('platform_subjects', JSON.stringify(subjects));
-                
-                const fileInfoElem = document.getElementById('file-info');
-                const fileInfoText = document.getElementById('file-info-text');
-                fileInfoElem.style.display = 'block';
-                fileInfoText.innerText = `تم استيراد ${rawEmployeesData.length} موظفاً بنجاح (واستثناء ${excludedEmployeesCount} موظفاً في الدرجة 12).`;
-                
-                document.getElementById('stats-container').style.display = 'grid';
-                
-                populateFilters();
-                updateDashboardStats();
-                currentPage = 1;
-                renderMainTable();
+                document.getElementById('file-status-indicator').classList.remove('hidden');
+                document.getElementById('file-status-indicator').classList.add('flex');
+                document.getElementById('file-status-text').innerText =
+                    `تم استيراد ${masterRawEmployees.length} موظفاً من ${uploadedSheets.length} ورقة بنجاح!`;
+
+                document.getElementById('badge-master-search-count').innerText = 
+                    `الملف الإجمالي: ${masterRawEmployees.length} موظف`;
+
+                populateAutoInspectorsSelect();
+                populateSubjectsSelect();
+                populateSchoolNaturesSelects();
+                populateRanksCheckboxes();
+                populateMunicipalitiesSelect();
+                populateViewerInspectorFilter();
+                updateOverdueBadgeCount();
+                renderViewerTable(true);
             };
             reader.readAsArrayBuffer(file);
         }
 
-        function populateFilters() {
-            const ranks = new Set();
-            const subjects = new Set();
-            const schools = new Set();
-            const natures = new Set();
-
-            rawEmployeesData.forEach(emp => {
-                if (emp['الرتبة']) ranks.add(emp['الرتبة']);
-                if (emp['المادة']) subjects.add(emp['المادة']);
-                if (emp['المؤسسة']) schools.add(emp['المؤسسة']);
-                if (emp['طبيعة المؤسسة']) natures.add(emp['طبيعة المؤسسة']);
-            });
-
-            populateSelect('filter-rank', Array.from(ranks), 'جميع الرتب');
-            populateSelect('filter-subject', Array.from(subjects), 'جميع المواد / التخصصات');
-            populateSelect('filter-school', Array.from(schools), 'جميع المؤسسات');
-            populateSelect('filter-school-nature', Array.from(natures), 'جميع طبائع المؤسسات');
-        }
-
-        function populateSelect(elemId, items, defaultText) {
-            const select = document.getElementById(elemId);
-            select.innerHTML = `<option value="">${defaultText}</option>`;
-            items.sort().forEach(item => {
-                select.innerHTML += `<option value="${item}">${item}</option>`;
+        function populateAutoInspectorsSelect() {
+            const select = document.getElementById('select-inspector-auto');
+            select.innerHTML = '<option value="">-- اختر المفتش --</option>';
+            autoFoundInspectors.forEach(insp => {
+                select.innerHTML += `<option value="${insp}">${insp}</option>`;
             });
         }
 
-        // Apply Search & Filters (مع مراعاة طبيعة المؤسسة وحالة التفتيش)
-        function applyFilters() {
-            const search = document.getElementById('search-input').value.toLowerCase().trim();
-            const statusFilter = document.getElementById('filter-status').value;
-            const natureFilter = document.getElementById('filter-school-nature').value;
-            const rank = document.getElementById('filter-rank').value;
-            const subject = document.getElementById('filter-subject').value;
-            const school = document.getElementById('filter-school').value;
+        function populateSubjectsSelect() {
+            const select = document.getElementById('select-inspector-subject');
+            select.innerHTML = '<option value="">-- اختر المادة التفتيشية (اختياري / تصفية حسب المادة) --</option>';
+            uniqueSubjects.forEach(sub => {
+                select.innerHTML += `<option value="${sub}">${sub}</option>`;
+            });
+        }
 
-            filteredEmployees = rawEmployeesData.filter(emp => {
-                const fullname = ((emp['اللقب'] || '') + ' ' + (emp['الاسم'] || '')).toLowerCase();
-                const jobId = String(emp['الرقم الوظيفي'] || '').toLowerCase();
-                const empSchool = String(emp['المؤسسة'] || '').toLowerCase();
-
-                const matchesSearch = !search || fullname.includes(search) || jobId.includes(search) || empSchool.includes(search);
-                const matchesRank = !rank || emp['الرتبة'] === rank;
-                const matchesSubject = !subject || emp['المادة'] === subject;
-                const matchesSchool = !school || emp['المؤسسة'] === school;
-                const matchesNature = !natureFilter || emp['طبيعة المؤسسة'] === natureFilter;
-
-                let matchesStatus = true;
-                if (statusFilter) {
-                    const status = checkInspectionStatus(emp['تاريخ النقطة التربوية']);
-                    if (statusFilter === 'overdue') {
-                        matchesStatus = status.overdue === true;
-                    } else if (statusFilter === 'updated') {
-                        matchesStatus = status.overdue === false;
-                    }
-                }
-
-                return matchesSearch && matchesRank && matchesSubject && matchesSchool && matchesNature && matchesStatus;
+        function populateSchoolNaturesSelects() {
+            const bSelect = document.getElementById('select-school-nature');
+            bSelect.innerHTML = '<option value="">-- جميع طبائع المؤسسات --</option>';
+            uniqueSchoolNatures.forEach(nat => {
+                bSelect.innerHTML += `<option value="${nat}">${nat}</option>`;
             });
 
-            currentPage = 1;
-            renderMainTable();
+            const vSelect = document.getElementById('viewer-filter-nature');
+            vSelect.innerHTML = '<option value="">جميع طبائع المؤسسات</option>';
+            uniqueSchoolNatures.forEach(nat => {
+                vSelect.innerHTML += `<option value="${nat}">${nat}</option>`;
+            });
         }
 
-        function handleSearch() {
-            applyFilters();
+        function checkAndToggleSubjectDropdown() {
+            const container = document.getElementById('subject-selection-container');
+            const manualVal = document.getElementById('input-inspector-manual').value.trim();
+            const autoVal = document.getElementById('select-inspector-auto').value;
+
+            const isManualTyped = manualVal.length > 0;
+            const hasMawadKeyword = (manualVal && manualVal.includes('المواد')) || (autoVal && autoVal.includes('المواد'));
+
+            if (isManualTyped || hasMawadKeyword) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                currentSelectedSubject = "";
+                document.getElementById('select-inspector-subject').value = "";
+            }
         }
 
-        function resetFilters() {
-            document.getElementById('search-input').value = '';
-            document.getElementById('filter-status').value = '';
-            document.getElementById('filter-school-nature').value = '';
-            document.getElementById('filter-rank').value = '';
-            document.getElementById('filter-subject').value = '';
-            document.getElementById('filter-school').value = '';
-            applyFilters();
+        function handleSubjectSelect(val) {
+            currentSelectedSubject = val;
+            updateDistrictEmployeePreview();
         }
 
-        // فحص حالة التفتيش
-        function checkInspectionStatus(dateStr) {
-            if (!dateStr || dateStr === '1970-01-01') {
-                return { overdue: true, days: 'غير محدد', text: 'متأخر (لم يزار)', badge: 'badge-danger' };
+        function populateRanksCheckboxes() {
+            const container = document.getElementById('ranks-checkbox-container');
+            container.innerHTML = '';
+            if (uniqueRanks.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-4">لا توجد رتب متاحة</p>';
+                return;
             }
 
+            uniqueRanks.forEach(rank => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center space-x-2 space-x-reverse text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-indigo-50/50 p-2 rounded-lg border border-slate-200 cursor-pointer transition';
+                label.innerHTML = `
+                    <input type="checkbox" value="${rank}" class="rank-checkbox rounded text-indigo-600 focus:ring-indigo-500" onchange="handleRankCheckboxChange()">
+                    <span>${rank}</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        function toggleAllRanks() {
+            const checkboxes = document.querySelectorAll('.rank-checkbox');
+            const allChecked = Array.from(checkboxes).every(c => c.checked);
+            checkboxes.forEach(c => c.checked = !allChecked);
+            handleRankCheckboxChange();
+        }
+
+        function populateMunicipalitiesSelect() {
+            const select = document.getElementById('select-municipality');
+            select.innerHTML = '<option value="">-- اختر البلدية --</option>';
+            uniqueMunicipalities.forEach(m => {
+                select.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+        }
+
+        function handleMunicipalityOrNatureChange() {
+            const munip = document.getElementById('select-municipality').value;
+            const nature = document.getElementById('select-school-nature').value;
+            currentSelectedNature = nature;
+
+            const schoolsSelect = document.getElementById('select-schools-multi');
+            schoolsSelect.innerHTML = '';
+
+            if (!munip && !nature) return;
+
+            const matchedSchools = new Set();
+            masterRawEmployees.forEach(emp => {
+                const matchesMunip = !munip || emp.municipality === munip;
+                const matchesNature = !nature || emp.schoolNature === nature;
+                if (matchesMunip && matchesNature && emp.school) {
+                    matchedSchools.add(emp.school);
+                }
+            });
+
+            Array.from(matchedSchools).sort().forEach(school => {
+                const nat = schoolToNatureMap[school] || '';
+                const display = nat ? `${school} [${nat}]` : school;
+                schoolsSelect.innerHTML += `<option value="${school}">${display}</option>`;
+            });
+
+            updateDistrictEmployeePreview();
+        }
+
+        function addSelectedSchoolsToDistrict() {
+            const schoolsSelect = document.getElementById('select-schools-multi');
+            const selectedOptions = Array.from(schoolsSelect.selectedOptions);
+            selectedOptions.forEach(opt => currentAssignedSchools.add(opt.value));
+            renderDistrictSchoolsTags();
+            updateDistrictEmployeePreview();
+        }
+
+        function addAllCurrentFilteredSchools() {
+            const schoolsSelect = document.getElementById('select-schools-multi');
+            Array.from(schoolsSelect.options).forEach(opt => currentAssignedSchools.add(opt.value));
+            renderDistrictSchoolsTags();
+            updateDistrictEmployeePreview();
+        }
+
+        function removeSchoolFromDistrict(schoolName) {
+            currentAssignedSchools.delete(schoolName);
+            renderDistrictSchoolsTags();
+            updateDistrictEmployeePreview();
+        }
+
+        function renderDistrictSchoolsTags() {
+            const container = document.getElementById('district-schools-tags');
+            const counter = document.getElementById('count-assigned-schools');
+            container.innerHTML = '';
+
+            counter.innerText = `${currentAssignedSchools.size} مؤسسة`;
+
+            if (currentAssignedSchools.size === 0) {
+                container.innerHTML = '<span class="text-xs text-slate-400 italic">لم يتم إضافة مؤسسات بعد...</span>';
+                return;
+            }
+
+            currentAssignedSchools.forEach(school => {
+                const munip = schoolToMunicipalityMap[school] || '';
+                const nat = schoolToNatureMap[school] || '';
+                const details = [munip, nat].filter(Boolean).join(' - ');
+                const tag = document.createElement('div');
+                tag.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-lg text-xs font-bold shadow-sm';
+                tag.innerHTML = `
+                    <span>${school} ${details ? '(' + details + ')' : ''}</span>
+                    <button type="button" onclick="removeSchoolFromDistrict('${school}')" class="text-indigo-400 hover:text-rose-600 transition"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                container.appendChild(tag);
+            });
+        }
+
+        function handleAutoInspectorSelect(val) {
+            if (val) {
+                document.getElementById('input-inspector-manual').value = "";
+                currentSelectedInspector = val;
+            } else {
+                currentSelectedInspector = document.getElementById('input-inspector-manual').value.trim();
+            }
+            checkAndToggleSubjectDropdown();
+            updateDistrictEmployeePreview();
+        }
+
+        function handleManualInspectorInput() {
+            const val = document.getElementById('input-inspector-manual').value.trim();
+            if (val) {
+                document.getElementById('select-inspector-auto').value = "";
+                currentSelectedInspector = val;
+            } else {
+                currentSelectedInspector = document.getElementById('select-inspector-auto').value;
+            }
+            checkAndToggleSubjectDropdown();
+            updateDistrictEmployeePreview();
+        }
+
+        function handleRankCheckboxChange() {
+            currentSelectedRanks.clear();
+            const checkboxes = document.querySelectorAll('.rank-checkbox:checked');
+            checkboxes.forEach(c => currentSelectedRanks.add(c.value));
+            updateDistrictEmployeePreview();
+        }
+
+        function getMatchingEmployeesForCurrentDistrict() {
+            if (currentAssignedSchools.size === 0) return [];
+
+            return masterRawEmployees.filter(emp => {
+                const matchesSchool = currentAssignedSchools.has(emp.school);
+                const matchesRank = currentSelectedRanks.size === 0 || currentSelectedRanks.has(emp.rank);
+                const matchesSubject = !currentSelectedSubject || (emp.subject && emp.subject.trim() === currentSelectedSubject.trim());
+                const matchesNature = !currentSelectedNature || (emp.schoolNature && emp.schoolNature.trim() === currentSelectedNature.trim());
+                return matchesSchool && matchesRank && matchesSubject && matchesNature;
+            });
+        }
+
+        function isEmployeeTrainee(emp) {
+            const admin = (emp.adminStatus || '').trim();
+            const assign = (emp.assignType || '').trim();
+            const rank = (emp.rank || '').trim();
+            return admin.includes('متربص') || admin.includes('تربص') ||
+                   assign.includes('متربص') || assign.includes('تربص') ||
+                   rank.includes('متربص');
+        }
+
+        function checkInspectionOverdueStatus(dateStr) {
+            if (!dateStr || dateStr.trim() === '') {
+                return { overdue: true, text: 'غير مسجل', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold' };
+            }
             const visitDate = new Date(dateStr);
             if (isNaN(visitDate.getTime())) {
-                return { overdue: true, days: 'غير محدد', text: 'متأخر (تاريخ غير صالح)', badge: 'badge-danger' };
+                return { overdue: true, text: 'تاريخ غير صالح', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold' };
             }
 
-            const diffTime = Math.abs(systemDate - visitDate);
+            const diffTime = Math.abs(TODAY - visitDate);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            const diffYears = (diffDays / 365).toFixed(1);
 
             if (diffDays > 730) {
-                return { overdue: true, days: `${diffYears} سنة (${diffDays} يوم)`, text: 'متأخر (> سنتين)', badge: 'badge-danger' };
+                return { overdue: true, text: 'متأخر (> سنتين)', badgeClass: 'bg-rose-100 text-rose-800 font-extrabold' };
             } else {
-                return { overdue: false, days: `${diffYears} سنة`, text: 'محيّن', badge: 'badge-success' };
+                return { overdue: false, text: 'محيّن', badgeClass: 'bg-emerald-100 text-emerald-800 font-bold' };
             }
         }
 
-        // Render Table
-        function renderMainTable() {
-            const tbody = document.getElementById('employees-table-body');
+        function updateDistrictEmployeePreview() {
+            const tbody = document.getElementById('district-preview-tbody');
+            const countElem = document.getElementById('preview-employees-count');
             tbody.innerHTML = '';
 
-            if (filteredEmployees.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:2rem;">لا توجد نتائج مطابقة لخيارات البحث والتصفية.</td></tr>`;
-                updatePaginationControls(0);
+            const matches = getMatchingEmployeesForCurrentDistrict();
+            countElem.innerText = matches.length;
+
+            if (matches.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-slate-400">اختر المفتش والمؤسسات والرتب المعنية لإظهار قائمة موظفي المقاطعة</td></tr>';
                 return;
             }
 
-            const startIndex = (currentPage - 1) * pageSize;
-            const pageData = filteredEmployees.slice(startIndex, startIndex + pageSize);
-
-            pageData.forEach((emp, index) => {
-                const globalIndex = startIndex + index + 1;
-                const status = checkInspectionStatus(emp['تاريخ النقطة التربوية']);
-                
+            matches.forEach((emp, index) => {
+                const status = checkInspectionOverdueStatus(emp.eduScoreDate);
                 const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-100 transition';
                 tr.innerHTML = `
-                    <td><strong>${globalIndex}</strong></td>
-                    <td><strong>${emp['اللقب'] || ''} ${emp['الاسم'] || ''}</strong></td>
-                    <td>${emp['الرتبة'] || '-'}</td>
-                    <td><span class="tag" style="background:#f1f5f9; font-weight:700;">${emp['الدرجة'] !== '' ? emp['الدرجة'] : '-'}</span></td>
-                    <td><span class="tag" style="background:#e0f2fe; color:#0369a1;">${emp['طبيعة المؤسسة'] || '-'}</span></td>
-                    <td><span class="tag">${emp['المادة'] || 'إداري / عام'}</span></td>
-                    <td>${emp['المؤسسة'] || '-'}</td>
-                    <td>${emp['تاريخ النقطة التربوية'] || '<span style="color:red">غير مسجل</span>'}</td>
-                    <td><strong style="color:var(--primary);">${emp['النقطة التربوية'] !== undefined ? emp['النقطة التربوية'] : '-'}</strong></td>
-                    <td><span class="badge ${status.badge}">${status.text}</span></td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding:4px 10px; font-size:0.78rem;" onclick="openEmployeeModal(${emp._id})">
-                            <i class="fa-solid fa-pen-to-square"></i> عرض وتعديل
-                        </button>
-                    </td>
+                    <td class="p-2.5 font-bold">${index + 1}</td>
+                    <td class="p-2.5 font-extrabold text-slate-800">${emp.fullname}</td>
+                    <td class="p-2.5 text-slate-600">${emp.rank || '-'}</td>
+                    <td class="p-2.5 text-indigo-700 font-bold">${emp.subject || '-'}</td>
+                    <td class="p-2.5 text-slate-600"><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">${emp.schoolNature || '-'}</span></td>
+                    <td class="p-2.5"><span class="px-2 py-0.5 ${emp.degree == '12' ? 'bg-amber-100 text-amber-800 font-extrabold' : 'bg-slate-200 text-slate-700'} rounded text-xs">${emp.degree || '-'}</span></td>
+                    <td class="p-2.5 text-slate-700">${emp.school || '-'} (${emp.municipality || '-'})</td>
+                    <td class="p-2.5 font-black text-indigo-700">${emp.eduScore || '-'}</td>
+                    <td class="p-2.5">${emp.eduScoreDate || 'غير مسجل'}</td>
+                    <td class="p-2.5"><span class="px-2 py-0.5 rounded-full text-xs ${status.badgeClass}">${status.text}</span></td>
                 `;
                 tbody.appendChild(tr);
             });
-
-            updatePaginationControls(filteredEmployees.length);
         }
 
-        function updatePaginationControls(totalItems) {
-            const totalPages = Math.ceil(totalItems / pageSize) || 1;
-            const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-            const end = Math.min(currentPage * pageSize, totalItems);
+        function resetDistrictBuilderForm() {
+            document.getElementById('select-inspector-auto').value = "";
+            document.getElementById('input-inspector-manual').value = "";
+            currentSelectedInspector = "";
 
-            document.getElementById('pagination-info').innerText = `عرض ${start} إلى ${end} من إجمالي ${totalItems} سجل`;
+            currentSelectedSubject = "";
+            document.getElementById('select-inspector-subject').value = "";
+            document.getElementById('subject-selection-container').classList.add('hidden');
 
-            const controls = document.getElementById('pagination-controls');
-            controls.innerHTML = '';
+            currentSelectedNature = "";
+            document.getElementById('select-school-nature').value = "";
 
-            const prevBtn = document.createElement('button');
-            prevBtn.className = 'page-btn';
-            prevBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i> السابق';
-            prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderMainTable(); } };
-            controls.appendChild(prevBtn);
+            const checkboxes = document.querySelectorAll('.rank-checkbox');
+            checkboxes.forEach(c => c.checked = false);
+            currentSelectedRanks.clear();
 
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
+            document.getElementById('select-municipality').value = "";
+            document.getElementById('select-schools-multi').innerHTML = "";
+            currentAssignedSchools.clear();
 
-            for (let i = startPage; i <= endPage; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
-                pageBtn.innerText = i;
-                pageBtn.onclick = () => { currentPage = i; renderMainTable(); };
-                controls.appendChild(pageBtn);
+            renderDistrictSchoolsTags();
+            updateDistrictEmployeePreview();
+        }
+
+        function commitCurrentDistrictSheet() {
+            const inspName = currentSelectedInspector || "مقاطعة بدون اسم";
+            const matchingEmployees = getMatchingEmployeesForCurrentDistrict();
+
+            if (currentAssignedSchools.size === 0) {
+                alert("يرجى اختيار مؤسسة واحدة على الأقل للمقاطعة التفتيشية!");
+                return;
             }
 
-            const nextBtn = document.createElement('button');
-            nextBtn.className = 'page-btn';
-            nextBtn.innerHTML = 'التالي <i class="fa-solid fa-chevron-left"></i>';
-            nextBtn.disabled = currentPage === totalPages;
-            nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderMainTable(); } };
-            controls.appendChild(nextBtn);
-        }
+            const sheetObj = {
+                id: Date.now(),
+                inspectorName: inspName,
+                subject: currentSelectedSubject || '',
+                nature: currentSelectedNature || '',
+                schools: Array.from(currentAssignedSchools),
+                ranks: Array.from(currentSelectedRanks),
+                employees: matchingEmployees
+            };
 
-        function updateDashboardStats() {
-            const total = rawEmployeesData.length;
-            let overdueCount = 0;
+            masterDraftSheets.push(sheetObj);
 
-            rawEmployeesData.forEach(emp => {
-                const status = checkInspectionStatus(emp['تاريخ النقطة التربوية']);
-                if (status.overdue) overdueCount++;
-            });
-
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-overdue').innerText = overdueCount;
-            document.getElementById('stat-visited').innerText = total - overdueCount;
-            document.getElementById('stat-excluded').innerText = excludedEmployeesCount;
-
-            const badge = document.getElementById('overdue-badge-count');
-            if (overdueCount > 0) {
-                badge.innerText = overdueCount;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-
-        // Modal Handling
-        function openEmployeeModal(empId) {
-            selectedEmployeeIndex = rawEmployeesData.findIndex(e => e._id === empId);
-            if (selectedEmployeeIndex === -1) return;
-
-            const emp = rawEmployeesData[selectedEmployeeIndex];
-
-            document.getElementById('modal-edit-date').value = emp['تاريخ النقطة التربوية'] || '';
-            document.getElementById('modal-edit-score').value = emp['النقطة التربوية'] || '';
-
-            document.getElementById('m-fullname').innerText = `${emp['اللقب'] || ''} ${emp['الاسم'] || ''}`;
-            document.getElementById('m-latin-name').innerText = `${emp['Nom'] || ''} ${emp['Prenom'] || ''}`;
-            document.getElementById('m-job-id').innerText = emp['الرقم الوظيفي'] || '-';
-            document.getElementById('m-nin').innerText = emp['رقم التعريف الوطني'] || '-';
-            document.getElementById('m-birth').innerText = `${emp['تاريخ الازدياد'] || '-'} بـ ${emp['مكان الازدياد'] || '-'}`;
-            document.getElementById('m-gender-blood').innerText = `${emp['الجنس'] || '-'} | فصيلة الدم: ${emp['فصيلة الدم'] || '-'}`;
-            document.getElementById('m-address').innerText = emp['العنوان'] || '-';
-            document.getElementById('m-phone').innerText = emp['الهاتف المحمول'] || '-';
-
-            document.getElementById('m-rank').innerText = emp['الرتبة'] || '-';
-            document.getElementById('m-subject').innerText = emp['المادة'] || 'إداري / عام';
-            document.getElementById('m-school').innerText = `${emp['المؤسسة'] || '-'} (${emp['البلدية'] || '-'})`;
-            document.getElementById('m-school-nature').innerText = emp['طبيعة المؤسسة'] || '-';
-            document.getElementById('m-status-degree').innerText = `${emp['الوضعية الادارية'] || '-'} - الدرجة: ${emp['الدرجة'] !== undefined ? emp['الدرجة'] : '-'}`;
-            document.getElementById('m-hire-date').innerText = emp['تاريخ التوظيف'] || '-';
-            document.getElementById('m-confirmation-date').innerText = emp['تاريخ الترسيم'] || '-';
-            document.getElementById('m-school-assign-date').innerText = emp['تاريخ التعيين في المؤسسة'] || '-';
-            document.getElementById('m-assign-type').innerText = emp['صفة التعيين'] || '-';
-
-            document.getElementById('employee-modal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('employee-modal').classList.remove('active');
-        }
-
-        function saveEmployeeChanges() {
-            if (selectedEmployeeIndex === -1) return;
-
-            const newDate = document.getElementById('modal-edit-date').value;
-            const newScore = document.getElementById('modal-edit-score').value;
-
-            rawEmployeesData[selectedEmployeeIndex]['تاريخ النقطة التربوية'] = newDate;
-            rawEmployeesData[selectedEmployeeIndex]['تاريخ النقطة الادارية'] = newDate;
-            rawEmployeesData[selectedEmployeeIndex]['النقطة التربوية'] = newScore ? parseFloat(newScore) : '';
-            rawEmployeesData[selectedEmployeeIndex]['النقطة الادارية'] = newScore ? parseFloat(newScore) : '';
-
-            alert('تم حفظ البيانات والتعديلات بنجاح!');
-            closeModal();
-
-            updateDashboardStats();
-            applyFilters();
-        }
-
-        // Reports Portal Filtering & Generation
-        function renderReportsPortal() {
-            inspectors = JSON.parse(localStorage.getItem('platform_inspectors')) || inspectors;
-            populateReportFilters();
-            filterReports();
-        }
-
-        function populateReportFilters() {
-            const inspSelect = document.getElementById('report-filter-inspector');
-            inspSelect.innerHTML = `<option value="">جميع المفتشين (المقاطعات)</option>`;
-            inspectors.forEach(insp => {
-                inspSelect.innerHTML += `<option value="${insp.id}">${insp.name} (${insp.spec})</option>`;
-            });
-
-            const subjSelect = document.getElementById('report-filter-subject');
-            const subjects = new Set();
-            rawEmployeesData.forEach(e => { if (e['المادة']) subjects.add(e['المادة']); });
+            renderMasterSheetsTable();
+            populateViewerInspectorFilter();
             
-            subjSelect.innerHTML = `<option value="">تصفية حسب المادة / التخصص</option>`;
-            Array.from(subjects).sort().forEach(sub => {
-                subjSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
-            });
+            const currentQ = document.getElementById('input-search-master-employees').value;
+            if (currentQ) handleMasterEmployeesSearch(currentQ);
+
+            alert(`تم حفظ ورقة المقاطعة لـ (${inspName}${currentSelectedSubject ? ' - ' + currentSelectedSubject : ''}) بنجاح!`);
         }
 
-        function filterReports() {
-            const selectedInspId = document.getElementById('report-filter-inspector').value;
-            const selectedSubject = document.getElementById('report-filter-subject').value;
+        function openCurrentDistrictTechCard() {
+            const inspName = currentSelectedInspector || "مقاطعة قيد التشكيل";
+            const matchingEmployees = getMatchingEmployeesForCurrentDistrict();
 
-            const tbody = document.getElementById('reports-table-body');
-            tbody.innerHTML = '';
-
-            let overdueEmployees = rawEmployeesData.filter(emp => {
-                const status = checkInspectionStatus(emp['تاريخ النقطة التربوية']);
-                return status.overdue;
-            });
-
-            if (selectedSubject) {
-                overdueEmployees = overdueEmployees.filter(emp => emp['المادة'] === selectedSubject);
-            }
-
-            if (selectedInspId) {
-                const inspector = inspectors.find(i => i.id == selectedInspId);
-                if (inspector && inspector.assignments) {
-                    overdueEmployees = overdueEmployees.filter(emp => {
-                        return inspector.assignments.some(a => 
-                            a.school === emp['المؤسسة'] && (a.subject === 'جميع التخصصات' || a.subject === emp['المادة'])
-                        );
-                    });
-                }
-            }
-
-            if (overdueEmployees.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:2rem; color:var(--text-muted);">لا يوجد موظفون متأخرون عن التفتيش وفق المعايير المحددة.</td></tr>`;
+            if (currentAssignedSchools.size === 0) {
+                alert("يرجى إضافة مؤسسة واحدة على الأقل للمقاطعة التفتيشية لعرض البطاقة الفنية!");
                 return;
             }
 
-            overdueEmployees.forEach((emp, index) => {
-                const status = checkInspectionStatus(emp['تاريخ النقطة التربوية']);
-                
-                const assignedInspectors = inspectors.filter(insp => 
-                    insp.assignments && insp.assignments.some(a => a.school === emp['المؤسسة'] && (a.subject === 'جميع التخصصات' || a.subject === emp['المادة']))
-                ).map(i => i.name).join('، ') || '<span style="color:var(--text-muted)">غير مسند</span>';
+            currentTechCardSheet = {
+                id: 'temp',
+                inspectorName: inspName,
+                subject: currentSelectedSubject || '',
+                nature: currentSelectedNature || '',
+                schools: Array.from(currentAssignedSchools),
+                ranks: Array.from(currentSelectedRanks),
+                employees: matchingEmployees
+            };
 
+            updateTechCardPreview();
+            document.getElementById('tech-card-modal-backdrop').classList.remove('hidden');
+        }
+
+        function renderMasterSheetsTable() {
+            const tbody = document.getElementById('master-sheets-tbody');
+            tbody.innerHTML = '';
+
+            if (masterDraftSheets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-400">لم يتم حفظ أي ورقة مقاطعة بعد في الخلفية</td></tr>';
+                return;
+            }
+
+            masterDraftSheets.forEach((sheet, idx) => {
                 const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-100 transition';
                 tr.innerHTML = `
-                    <td><strong>${index + 1}</strong></td>
-                    <td>${emp['الرقم الوظيفي'] || '-'}</td>
-                    <td><strong>${emp['اللقب'] || ''} ${emp['الاسم'] || ''}</strong></td>
-                    <td>${emp['المؤسسة'] || '-'}</td>
-                    <td><span class="tag" style="background:#e0f2fe; color:#0369a1;">${emp['طبيعة المؤسسة'] || '-'}</span></td>
-                    <td>${emp['الرتبة'] || '-'}</td>
-                    <td><span class="tag">${emp['الدرجة'] !== '' ? emp['الدرجة'] : '-'}</span></td>
-                    <td><span class="tag">${emp['المادة'] || 'إداري / عام'}</span></td>
-                    <td>${emp['تاريخ النقطة التربوية'] || 'غير مسجل'}</td>
-                    <td><span class="badge badge-danger">${status.days}</span></td>
-                    <td><strong style="color:var(--primary);">${assignedInspectors}</strong></td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding:3px 8px; font-size:0.75rem;" onclick="openEmployeeModal(${emp._id})">
-                            <i class="fa-solid fa-pen"></i> تعديل
+                    <td class="p-3 font-bold">${idx + 1}</td>
+                    <td class="p-3 font-extrabold text-indigo-900">${sheet.inspectorName}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 ${sheet.subject ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'} rounded font-bold">${sheet.subject || 'عام / غير محدد'}</span></td>
+                    <td class="p-3"><span class="px-2 py-0.5 ${sheet.nature ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-500'} rounded font-bold">${sheet.nature || 'الكل'}</span></td>
+                    <td class="p-3"><span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded-full font-bold">${sheet.schools.length} مؤسسة</span></td>
+                    <td class="p-3"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold">${sheet.employees.length} موظف</span></td>
+                    <td class="p-3 text-center flex items-center justify-center gap-2">
+                        <button onclick="openDistrictTechCardModal(${sheet.id})" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-lg border border-indigo-200 transition flex items-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-print"></i>
+                            <span>البطاقة الفنية</span>
+                        </button>
+                        <button onclick="deleteMasterSheet(${sheet.id})" class="text-rose-600 hover:text-rose-800 font-bold px-2 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 transition" title="حذف المقاطعة">
+                            <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
                 `;
@@ -1387,54 +1285,676 @@
             });
         }
 
-        // Export Filtered Excel File (تصدير نتائج التصفية المطبقة فقط)
-        function exportUpdatedExcel() {
-            if (filteredEmployees.length === 0) {
-                alert('لا توجد بيانات مطابقة لخيارات التصفية الحالية لتصديرها');
-                return;
-            }
-
-            // تنظيف الحقل التقني الداخلي _id قبل التصدير
-            const cleanData = filteredEmployees.map(({ _id, ...rest }) => rest);
-            const ws = XLSX.utils.json_to_sheet(cleanData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "نتائج_التصفية");
-            XLSX.writeFile(wb, "سجل_الموظفين_المصفى.xlsx");
+        function deleteMasterSheet(id) {
+            masterDraftSheets = masterDraftSheets.filter(s => s.id !== id);
+            renderMasterSheetsTable();
+            populateViewerInspectorFilter();
+            const currentQ = document.getElementById('input-search-master-employees').value;
+            if (currentQ) handleMasterEmployeesSearch(currentQ);
         }
 
-        // Export Current Report to Excel
-        function exportReportToExcel() {
-            const reportTable = document.getElementById('reports-table-body');
-            const rows = reportTable.querySelectorAll('tr');
-
-            if (rows.length === 0 || rows[0].cells.length < 5) {
-                alert('لا توجد بيانات تقارير لتصديرها');
-                return;
-            }
-
-            const dataToExport = [];
-            rows.forEach(r => {
-                const cols = r.querySelectorAll('td');
-                if (cols.length >= 11) {
-                    dataToExport.push({
-                        'الرقم الوظيفي': cols[1].innerText,
-                        'اسم ولقب الموظف': cols[2].innerText,
-                        'المؤسسة': cols[3].innerText,
-                        'طبيعة المؤسسة': cols[4].innerText,
-                        'الرتبة': cols[5].innerText,
-                        'الدرجة': cols[6].innerText,
-                        'المادة / التخصص': cols[7].innerText,
-                        'تاريخ آخر زيارة': cols[8].innerText,
-                        'مدة التأخر': cols[9].innerText,
-                        'المفتش المشرف': cols[10].innerText
-                    });
+        function findInspectorsForEmployee(emp) {
+            const assignedInspectors = [];
+            masterDraftSheets.forEach(sheet => {
+                const found = sheet.employees.some(e => e.id === emp.id);
+                if (found) {
+                    assignedInspectors.push(sheet.inspectorName + (sheet.subject ? ` [${sheet.subject}]` : ''));
                 }
             });
 
-            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            if (assignedInspectors.length > 0) return assignedInspectors;
+
+            if (emp.sheetName && emp.sheetName.includes('مفتش')) {
+                return [emp.sheetName + " (من ورقة الملف)"];
+            }
+
+            return [];
+        }
+
+        function handleMasterEmployeesSearch(query) {
+            const q = (query || '').trim().toLowerCase();
+            const box = document.getElementById('master-search-results-box');
+            const tbody = document.getElementById('master-search-results-tbody');
+            const matchesCount = document.getElementById('master-search-matches-count');
+            const scope = document.getElementById('select-search-scope').value;
+
+            if (!q) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            let sourcePool = [];
+
+            if (scope === 'all') {
+                sourcePool = masterRawEmployees;
+            } else {
+                const savedMap = new Map();
+                masterDraftSheets.forEach(sheet => {
+                    sheet.employees.forEach(emp => {
+                        if (!savedMap.has(emp.id)) savedMap.set(emp.id, emp);
+                    });
+                });
+                sourcePool = Array.from(savedMap.values());
+            }
+
+            const matches = sourcePool.filter(emp => {
+                const matchesText = 
+                    (emp.fullname && emp.fullname.toLowerCase().includes(q)) ||
+                    (emp.surname && emp.surname.toLowerCase().includes(q)) ||
+                    (emp.firstname && emp.firstname.toLowerCase().includes(q)) ||
+                    (emp.rank && emp.rank.toLowerCase().includes(q)) ||
+                    (emp.subject && emp.subject.toLowerCase().includes(q)) ||
+                    (emp.schoolNature && emp.schoolNature.toLowerCase().includes(q)) ||
+                    (emp.school && emp.school.toLowerCase().includes(q)) ||
+                    (emp.municipality && emp.municipality.toLowerCase().includes(q));
+
+                if (matchesText) return true;
+
+                const inspectors = findInspectorsForEmployee(emp);
+                return inspectors.some(ins => ins.toLowerCase().includes(q));
+            });
+
+            tbody.innerHTML = '';
+            matchesCount.innerText = `${matches.length} نتيجة`;
+            box.classList.remove('hidden');
+
+            if (matches.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-slate-400 font-bold">لا يوجد موظف مطابق للبحث الحالي</td></tr>';
+                return;
+            }
+
+            matches.slice(0, 100).forEach((emp, i) => {
+                const inspectors = findInspectorsForEmployee(emp);
+                const status = checkInspectionOverdueStatus(emp.eduScoreDate);
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-indigo-50/60 transition';
+
+                let inspectorHtml = '';
+                if (inspectors.length > 0) {
+                    inspectorHtml = inspectors.map(ins => `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-indigo-100 text-indigo-900 border border-indigo-200 rounded-full font-black text-xs shadow-xs mb-0.5"><i class="fa-solid fa-user-tie text-[10px] text-indigo-600"></i> ${ins}</span>`).join(' ');
+                } else {
+                    inspectorHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-100 text-slate-500 rounded-full font-bold text-xs"><i class="fa-solid fa-hourglass-half text-[10px]"></i> غير مسند لمقاطعة بعد</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold">${i + 1}</td>
+                    <td class="p-2.5 font-extrabold text-slate-900">
+                        ${emp.fullname}
+                        ${isEmployeeTrainee(emp) ? '<span class="mr-1 px-1.5 py-0.2 bg-sky-100 text-sky-800 rounded font-black text-[10px]">متربص</span>' : ''}
+                    </td>
+                    <td class="p-2.5 text-slate-600">${emp.rank || '-'}</td>
+                    <td class="p-2.5 text-indigo-700 font-bold">${emp.subject || '-'}</td>
+                    <td class="p-2.5 text-slate-600"><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">${emp.schoolNature || '-'}</span></td>
+                    <td class="p-2.5 font-black text-slate-800">${emp.degree || '-'}</td>
+                    <td class="p-2.5 text-slate-700 font-medium">${emp.school || '-'} (${emp.municipality || '-'})</td>
+                    <td class="p-2.5">${inspectorHtml}</td>
+                    <td class="p-2.5"><span class="px-2 py-0.5 rounded-full text-xs ${status.badgeClass}">${status.text}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearMasterEmployeesSearch() {
+            document.getElementById('input-search-master-employees').value = '';
+            document.getElementById('master-search-results-box').classList.add('hidden');
+        }
+
+        function openDistrictTechCardModal(sheetId) {
+            const sheet = masterDraftSheets.find(s => s.id === sheetId);
+            if (!sheet) return;
+            currentTechCardSheet = sheet;
+            updateTechCardPreview();
+            document.getElementById('tech-card-modal-backdrop').classList.remove('hidden');
+        }
+
+        function openViewerDistrictTechCard() {
+            const selected = document.getElementById('viewer-filter-inspector').value;
+
+            if (!selected) {
+                alert("يرجى اختيار ورقة المقاطعة من قائمة (جميع أوراق المقاطعات) أولاً لطباعة بطاقتها الفنية.");
+                return;
+            }
+
+            if (selected.startsWith('draft:')) {
+                const id = selected.slice(6);
+                const sh = masterDraftSheets.find(x => String(x.id) === id);
+                if (!sh) return;
+                openDistrictTechCardModal(sh.id);
+                return;
+            }
+
+            if (selected.startsWith('file:')) {
+                const sh = uploadedSheets[parseInt(selected.slice(5), 10)];
+                if (!sh || !sh.employees.length) {
+                    alert("هذه الورقة لا تحتوي على موظفين لعرض بطاقتها الفنية.");
+                    return;
+                }
+                const schools = Array.from(new Set(sh.employees.map(e => e.school || 'مؤسسة غير محددة')));
+                currentTechCardSheet = {
+                    id: 'file-' + selected,
+                    inspectorName: sh.name,
+                    subject: '',
+                    nature: '',
+                    schools: schools,
+                    ranks: Array.from(new Set(sh.employees.map(e => e.rank).filter(Boolean))),
+                    employees: sh.employees
+                };
+                updateTechCardPreview();
+                document.getElementById('tech-card-modal-backdrop').classList.remove('hidden');
+            }
+        }
+
+        function closeTechnicalCardModal() {
+            document.getElementById('tech-card-modal-backdrop').classList.add('hidden');
+        }
+
+        function updateTechCardPreview() {
+            if (!currentTechCardSheet) return;
+            const sheet = currentTechCardSheet;
+            const wilaya = document.getElementById('tech-input-wilaya').value.trim() || '.......................';
+            const serviceType = document.querySelector('input[name="tech-service-choice"]:checked')?.value || 'مصلحة';
+
+            const totalEmps = sheet.employees.length;
+            let trainees = 0;
+            let degree12Count = 0;
+            let overdueCount = 0;
+            let updatedCount = 0;
+
+            const rankMap = {};
+            const schoolMap = {};
+
+            sheet.employees.forEach(emp => {
+                if (isEmployeeTrainee(emp)) trainees++;
+                if (emp.degree == '12') degree12Count++;
+
+                const st = checkInspectionOverdueStatus(emp.eduScoreDate);
+                if (st.overdue) overdueCount++;
+                else updatedCount++;
+
+                const r = emp.rank || 'رتبة غير محددة';
+                rankMap[r] = (rankMap[r] || 0) + 1;
+
+                const s = emp.school || 'مؤسسة غير محددة';
+                if (!schoolMap[s]) {
+                    schoolMap[s] = {
+                        name: s,
+                        municipality: emp.municipality || '-',
+                        nature: emp.schoolNature || '-',
+                        count: 0
+                    };
+                }
+                schoolMap[s].count++;
+            });
+
+            const target = document.getElementById('tech-card-print-target');
+            target.innerHTML = `
+                <div style="font-family: 'Cairo', sans-serif; direction: rtl; color: #0f172a; line-height: 1.5;">
+                    
+                    <div style="text-align: center; font-weight: 800; margin-bottom: 12px;">
+                        <div style="font-size: 13pt;">الجمهورية الجزائرية الديمقراطية الشعبية</div>
+                        <div style="font-size: 12pt; margin-top: 2px;">وزارة التربية الوطنية</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 2px solid #0f172a; pb-2;">
+                        <div style="font-size: 11pt; font-weight: 700; line-height: 1.8;">
+                            <div>مديرية التربية لولاية: <span style="font-weight: 900; text-decoration: underline;">${wilaya}</span></div>
+                            <div>${serviceType} التكوين والتفتيش</div>
+                        </div>
+                        <div style="font-size: 10pt; font-weight: 700; color: #475569; text-align: left;">
+                            <div>الموسم الدراسي: 2026 / 2027</div>
+                            <div>تاريخ الإصدار: ${formatDateValue(TODAY)}</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; border: 2.5px solid #1e293b; background-color: #f8fafc; padding: 12px; margin-bottom: 18px; border-radius: 8px;">
+                        <h2 style="margin: 0; font-size: 15pt; font-weight: 900; color: #0f172a;">
+                            البطاقة الفنية للمقاطعة التفتيشية للسيد (ة) المفتش (ة): ${sheet.inspectorName}
+                        </h2>
+                        <div style="margin-top: 5px; font-size: 10.5pt; font-weight: 700; color: #4338ca;">
+                            ${sheet.subject ? `<span>تخصص / المادة: <b>${sheet.subject}</b></span>` : ''}
+                            ${sheet.nature ? `<span style="margin-right: 15px;">طبيعة المؤسسات: <b>${sheet.nature}</b></span>` : ''}
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 11.5pt; font-weight: 800; margin-bottom: 8px; color: #1e293b; border-right: 4px solid #4f46e5; padding-right: 8px;">
+                            أولاً: المعطيات الإحصائية العامة للمقاطعة
+                        </h3>
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 9.5pt;">
+                            <thead>
+                                <tr style="background-color: #e2e8f0; font-weight: 800;">
+                                    <th style="border: 1px solid #475569; padding: 6px;">عدد المؤسسات</th>
+                                    <th style="border: 1px solid #475569; padding: 6px;">إجمالي الموظفين</th>
+                                    <th style="border: 1px solid #475569; padding: 6px;">المتربصون</th>
+                                    <th style="border: 1px solid #475569; padding: 6px;">المرسمون</th>
+                                    <th style="border: 1px solid #475569; padding: 6px;">الدرجة 12</th>
+                                    <th style="border: 1px solid #475569; padding: 6px;">زيارات محيّنة</th>
+                                    <th style="border: 1px solid #475569; padding: 6px;">زيارات متأخرة (> سنتين)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="font-weight: 800;">
+                                    <td style="border: 1px solid #64748b; padding: 6px; font-size: 11pt;">${sheet.schools.length}</td>
+                                    <td style="border: 1px solid #64748b; padding: 6px; font-size: 11pt; color: #312e81;">${totalEmps}</td>
+                                    <td style="border: 1px solid #64748b; padding: 6px; font-size: 11pt; color: #0284c7;">${trainees}</td>
+                                    <td style="border: 1px solid #64748b; padding: 6px; font-size: 11pt;">${totalEmps - trainees}</td>
+                                    <td style="border: 1px solid #64748b; padding: 6px; font-size: 11pt; color: #d97706;">${degree12Count}</td>
+                                    <td style="border: 1px solid #64748b; padding: 6px; font-size: 11pt; color: #16a34a;">${updatedCount}</td>
+                                    <td style="border: 1px solid #64748b; padding: 6px; font-size: 11pt; color: #dc2626;">${overdueCount}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <h3 style="font-size: 11.5pt; font-weight: 800; margin-bottom: 8px; color: #1e293b; border-right: 4px solid #4f46e5; padding-right: 8px;">
+                            ثانياً: التعداد الإجمالي للموظفين حسب الرتب
+                        </h3>
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 9pt;">
+                            <thead>
+                                <tr style="background-color: #f1f5f9; font-weight: 800;">
+                                    <th style="border: 1px solid #94a3b8; padding: 5px;">الرتبة</th>
+                                    <th style="border: 1px solid #94a3b8; padding: 5px; width: 80px;">العدد</th>
+                                    <th style="border: 1px solid #94a3b8; padding: 5px;">الرتبة</th>
+                                    <th style="border: 1px solid #94a3b8; padding: 5px; width: 80px;">العدد</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(() => {
+                                    const entries = Object.entries(rankMap);
+                                    let rowsHtml = '';
+                                    for (let i = 0; i < entries.length; i += 2) {
+                                        const r1 = entries[i];
+                                        const r2 = entries[i + 1];
+                                        rowsHtml += `<tr>
+                                            <td style="border: 1px solid #cbd5e1; padding: 5px; font-weight: 700; text-align: right;">${r1 ? r1[0] : '-'}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 5px; font-weight: 800;">${r1 ? r1[1] : '-'}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 5px; font-weight: 700; text-align: right;">${r2 ? r2[0] : '-'}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 5px; font-weight: 800;">${r2 ? r2[1] : '-'}</td>
+                                        </tr>`;
+                                    }
+                                    return rowsHtml || '<tr><td colspan="4" style="border: 1px solid #cbd5e1; padding: 6px;">لا توجد رتب مسجلة</td></tr>';
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    ${(() => {
+                        const schoolRows = Object.values(schoolMap);
+                        const TAIL = Math.min(3, schoolRows.length);
+                        const headRows = schoolRows.slice(0, schoolRows.length - TAIL);
+                        const tailRows = schoolRows.slice(schoolRows.length - TAIL);
+                        const offset = headRows.length;
+
+                        const colgroup = `<colgroup><col style="width: 6%;"><col style="width: 38%;"><col style="width: 20%;"><col style="width: 22%;"><col style="width: 14%;"></colgroup>`;
+                        const tableStyle = 'width: 100%; border-collapse: collapse; text-align: right; font-size: 9pt; table-layout: fixed;';
+                        const rowHtml = (s, idx) => `
+                                    <tr style="break-inside: avoid; page-break-inside: avoid;">
+                                        <td style="border: 1px solid #cbd5e1; padding: 4.5px; text-align: center; font-weight: 700;">${idx + 1}</td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 4.5px; font-weight: 800; color: #1e293b;">${s.name}</td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 4.5px;">${s.municipality}</td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 4.5px;">${s.nature}</td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 4.5px; text-align: center; font-weight: 900; color: #4338ca;">${s.count}</td>
+                                    </tr>`;
+
+                        const heading = `
+                        <h3 style="font-size: 11.5pt; font-weight: 800; margin-bottom: 8px; color: #1e293b; border-right: 4px solid #4f46e5; padding-right: 8px; break-after: avoid; page-break-after: avoid;">
+                            ثالثاً: قائمة المؤسسات والبلديات التابعة للمقاطعة التفتيشية
+                        </h3>`;
+
+                        const thead = `
+                            <thead style="display: table-header-group;">
+                                <tr style="background-color: #f1f5f9; font-weight: 800;">
+                                    <th style="border: 1px solid #64748b; padding: 5px; text-align: center;">#</th>
+                                    <th style="border: 1px solid #64748b; padding: 5px;">اسم المؤسسة</th>
+                                    <th style="border: 1px solid #64748b; padding: 5px;">البلدية</th>
+                                    <th style="border: 1px solid #64748b; padding: 5px;">طبيعة المؤسسة</th>
+                                    <th style="border: 1px solid #64748b; padding: 5px; text-align: center;">عدد الموظفين</th>
+                                </tr>
+                            </thead>`;
+
+                        const signature = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 30px; font-weight: 800; font-size: 11pt; break-inside: avoid; page-break-inside: avoid;">
+                            <div style="text-align: center; width: 45%;">
+                                <div>رئيس ${serviceType} التكوين والتفتيش</div>
+                                <div style="margin-top: 40px; font-size: 9pt; color: #64748b;">(الختم والتأشيرة)</div>
+                            </div>
+                            <div style="text-align: center; width: 45%;">
+                                <div>حرر بـ: ${wilaya} في: ........................</div>
+                                <div style="margin-top: 5px;">مفتش (ة) المقاطعة</div>
+                                <div style="margin-top: 35px; font-size: 9pt; color: #64748b;">(الإمضاء والختم)</div>
+                            </div>
+                        </div>`;
+
+                        // Part 1: heading + all rows except the last few (may split across pages freely)
+                        const headPart = headRows.length ? `
+                    <div style="margin-bottom: 0;">
+                        ${heading}
+                        <table style="${tableStyle}">
+                            ${colgroup}${thead}
+                            <tbody>${headRows.map((r, i) => rowHtml(r, i)).join('')}</tbody>
+                        </table>
+                    </div>` : '';
+
+                        // Part 2: last rows + signature, kept together so the signature never sits alone on a page
+                        const tailPart = `
+                    <div style="break-inside: avoid; page-break-inside: avoid;">
+                        ${headRows.length ? '' : heading}
+                        <table style="${tableStyle}">
+                            ${colgroup}${headRows.length ? '' : thead}
+                            <tbody>${tailRows.map((r, i) => rowHtml(r, offset + i)).join('')}</tbody>
+                        </table>
+                        ${signature}
+                    </div>`;
+
+                        return headPart + tailPart;
+                    })()}
+
+                </div>
+            `;
+        }
+
+        function printTechnicalCard() {
+            const content = document.getElementById('tech-card-print-target').innerHTML;
+            const printWrapper = document.getElementById('printable-tech-card-wrapper');
+            printWrapper.innerHTML = content;
+            window.print();
+        }
+
+        function exportMasterExcelWorkbook() {
+            if (masterDraftSheets.length === 0) {
+                alert("لا توجد مقاطعات محفوظة للتصدير! قم بحفظ مقاطعة واحدة على الأقل أولاً.");
+                return;
+            }
+
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "تقرير_التأخر_عن_التفتيش");
-            XLSX.writeFile(wb, "تقرير_الموظفين_المتأخرين_عن_التفتيش.xlsx");
+
+            masterDraftSheets.forEach(sheet => {
+                let sheetName = (sheet.inspectorName + (sheet.subject ? '-' + sheet.subject : '')).replace(/[:\/?*\[\]]/g, '').trim();
+                if (sheetName.length > 30) sheetName = sheetName.substring(0, 30);
+                if (!sheetName) sheetName = "مقاطعة";
+
+                const excelRows = sheet.employees.map((emp, i) => ({
+                    "الرقم": i + 1,
+                    "اللقب": emp.surname,
+                    "الاسم": emp.firstname,
+                    "اللقب والاسم": emp.fullname,
+                    "الرتبة": emp.rank,
+                    "المادة": emp.subject || '',
+                    "طبيعة المؤسسة": emp.schoolNature || '',
+                    "الدرجة": emp.degree,
+                    "المؤسسة": emp.school,
+                    "البلدية": emp.municipality,
+                    "النقطة التربوية": emp.eduScore,
+                    "تاريخ النقطة التربوية": emp.eduScoreDate,
+                    "تاريخ الميلاد": emp.birthDate,
+                    "الهاتف المحمول": emp.phone,
+                    "الوضعية الإدارية": emp.adminStatus,
+                    "تاريخ التوظيف": emp.hireDate,
+                    "تاريخ التعيين بالرتبة": emp.assignRankDate,
+                    "تاريخ الترسيم": emp.confirmationDate,
+                    "تاريخ التعيين بالمؤسسة": emp.schoolAssignDate,
+                    "صفة التعيين": emp.assignType,
+                    "تاريخ السريان": emp.effectiveDate,
+                    "اسم المفتش المشرف": sheet.inspectorName,
+                    "المادة المشرف عليها": sheet.subject || '',
+                    "طبيعة المؤسسة المحددة": sheet.nature || 'الكل'
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(excelRows);
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            });
+
+            XLSX.writeFile(wb, "ملف_المقاطعات_التفتيشية.xlsx");
+        }
+
+        function populateViewerInspectorFilter() {
+            const select = document.getElementById('viewer-filter-inspector');
+            const previous = select.value;
+            select.innerHTML = '';
+
+            select.appendChild(new Option('جميع أوراق المقاطعات', ''));
+
+            if (uploadedSheets.length > 0) {
+                const grp = document.createElement('optgroup');
+                grp.label = 'أوراق الملف المرفوع';
+                uploadedSheets.forEach((sh, i) => {
+                    grp.appendChild(new Option(`${sh.name} (${sh.employees.length})`, `file:${i}`));
+                });
+                select.appendChild(grp);
+            }
+
+            if (masterDraftSheets.length > 0) {
+                const grp = document.createElement('optgroup');
+                grp.label = 'المقاطعات المحفوظة في الخلفية';
+                masterDraftSheets.forEach(sh => {
+                    grp.appendChild(new Option(`${sh.inspectorName}${sh.subject ? ' - ' + sh.subject : ''} (${sh.employees.length})`, `draft:${sh.id}`));
+                });
+                select.appendChild(grp);
+            }
+
+            const stillExists = Array.from(select.options).some(o => o.value === previous);
+            select.value = stillExists ? previous : '';
+        }
+
+        function getViewerCurrentEmployees() {
+            const selected = document.getElementById('viewer-filter-inspector').value;
+
+            if (selected.startsWith('file:')) {
+                const sh = uploadedSheets[parseInt(selected.slice(5), 10)];
+                return sh ? sh.employees : [];
+            }
+
+            if (selected.startsWith('draft:')) {
+                const id = selected.slice(6);
+                const sh = masterDraftSheets.find(x => String(x.id) === id);
+                return sh ? sh.employees : [];
+            }
+
+            if (uploadedSheets.length > 0) {
+                return masterRawEmployees;
+            }
+
+            if (masterDraftSheets.length > 0) {
+                const mergedMap = new Map();
+                masterDraftSheets.forEach(sh => sh.employees.forEach(emp => mergedMap.set(emp.id, emp)));
+                return Array.from(mergedMap.values());
+            }
+
+            return masterRawEmployees;
+        }
+
+        function changeViewerPage(action) {
+            if (action === 'first') viewerCurrentPage = 1;
+            else if (action === 'prev') viewerCurrentPage = Math.max(1, viewerCurrentPage - 1);
+            else if (action === 'next') viewerCurrentPage = Math.min(viewerTotalPages, viewerCurrentPage + 1);
+            else if (action === 'last') viewerCurrentPage = viewerTotalPages;
+            renderViewerTable();
+            document.getElementById('viewer-table-tbody').closest('.overflow-hidden')
+                .scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderViewerPagination(totalItems) {
+            const from = totalItems === 0 ? 0 : (viewerCurrentPage - 1) * VIEWER_PAGE_SIZE + 1;
+            const to = Math.min(viewerCurrentPage * VIEWER_PAGE_SIZE, totalItems);
+
+            document.getElementById('viewer-page-summary').innerText =
+                totalItems === 0 ? 'لا توجد بيانات للعرض' : `عرض الموظفين من ${from} إلى ${to} من أصل ${totalItems}`;
+            document.getElementById('viewer-page-indicator').innerText =
+                `صفحة ${viewerCurrentPage} من ${viewerTotalPages}`;
+
+            const atFirst = viewerCurrentPage <= 1;
+            const atLast = viewerCurrentPage >= viewerTotalPages;
+            document.getElementById('btn-page-first').disabled = atFirst;
+            document.getElementById('btn-page-prev').disabled = atFirst;
+            document.getElementById('btn-page-next').disabled = atLast;
+            document.getElementById('btn-page-last').disabled = atLast;
+        }
+
+        function renderViewerTable(resetPage = false) {
+            const tbody = document.getElementById('viewer-table-tbody');
+            const search = document.getElementById('viewer-search-input').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('viewer-filter-status').value;
+            const natureFilter = document.getElementById('viewer-filter-nature').value;
+
+            const sourceList = getViewerCurrentEmployees();
+            tbody.innerHTML = '';
+
+            let totalCount = sourceList.length;
+            let overdueCount = 0;
+            let updatedCount = 0;
+            let degree12Count = 0;
+            let traineeCount = 0;
+
+            const filtered = sourceList.filter(emp => {
+                const status = checkInspectionOverdueStatus(emp.eduScoreDate);
+                const isTrainee = isEmployeeTrainee(emp);
+
+                if (status.overdue) overdueCount++;
+                else updatedCount++;
+
+                if (emp.degree == '12') degree12Count++;
+                if (isTrainee) traineeCount++;
+
+                const matchesSearch = !search || 
+                    emp.fullname.toLowerCase().includes(search) || 
+                    (emp.rank && emp.rank.toLowerCase().includes(search)) || 
+                    (emp.subject && emp.subject.toLowerCase().includes(search)) ||
+                    (emp.schoolNature && emp.schoolNature.toLowerCase().includes(search)) ||
+                    (emp.adminStatus && emp.adminStatus.toLowerCase().includes(search)) ||
+                    (emp.school && emp.school.toLowerCase().includes(search));
+
+                let matchesStatus = true;
+                if (statusFilter === 'overdue') matchesStatus = status.overdue;
+                if (statusFilter === 'valid') matchesStatus = !status.overdue;
+                if (statusFilter === 'trainees') matchesStatus = isTrainee;
+
+                let matchesNature = !natureFilter || (emp.schoolNature && emp.schoolNature === natureFilter);
+
+                return matchesSearch && matchesStatus && matchesNature;
+            });
+
+            document.getElementById('stat-viewer-total').innerText = totalCount;
+            document.getElementById('stat-viewer-trainees').innerText = traineeCount;
+            document.getElementById('stat-viewer-overdue').innerText = overdueCount;
+            document.getElementById('stat-viewer-updated').innerText = updatedCount;
+            document.getElementById('stat-viewer-deg12').innerText = degree12Count;
+
+            viewerTotalPages = Math.max(1, Math.ceil(filtered.length / VIEWER_PAGE_SIZE));
+            if (resetPage) viewerCurrentPage = 1;
+            viewerCurrentPage = Math.min(Math.max(1, viewerCurrentPage), viewerTotalPages);
+            renderViewerPagination(filtered.length);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="text-center py-10 text-slate-400">لا توجد سجلات مطابقة للبحث أو التصفية الحالية</td></tr>';
+                return;
+            }
+
+            const pageStart = (viewerCurrentPage - 1) * VIEWER_PAGE_SIZE;
+            const pageItems = filtered.slice(pageStart, pageStart + VIEWER_PAGE_SIZE);
+
+            pageItems.forEach((emp, i) => {
+                const index = pageStart + i;
+                const status = checkInspectionOverdueStatus(emp.eduScoreDate);
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${index + 1}</td>
+                    <td class="p-3 font-extrabold text-slate-800">${emp.fullname}</td>
+                    <td class="p-3 text-slate-600">${emp.rank || '-'}</td>
+                    <td class="p-3 text-indigo-700 font-bold">${emp.subject || '-'}</td>
+                    <td class="p-3 text-slate-600"><span class="px-2 py-0.5 bg-slate-100 rounded text-xs font-semibold">${emp.schoolNature || '-'}</span></td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 ${emp.degree == '12' ? 'bg-amber-100 text-amber-800 font-black' : 'bg-slate-100 text-slate-700'} rounded text-xs">${emp.degree || '-'}</span>
+                        ${isEmployeeTrainee(emp) ? '<span class="inline-block mt-0.5 px-1.5 py-0.2 bg-sky-100 text-sky-800 rounded font-black text-[10px]">متربص</span>' : ''}
+                    </td>
+                    <td class="p-3 text-slate-700 font-semibold">${emp.school || '-'} (${emp.municipality || '-'})</td>
+                    <td class="p-3 font-black text-indigo-700">${emp.eduScore || '-'}</td>
+                    <td class="p-3 font-medium">${emp.eduScoreDate || 'غير مسجل'}</td>
+                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${status.badgeClass}">${status.text}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="openInspectionUpdateModal(${emp.id})" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-lg border border-indigo-200 transition flex items-center gap-1 mx-auto">
+                            <i class="fa-solid fa-pen"></i> تحيين
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateOverdueBadgeCount() {
+            let overdue = 0;
+            masterRawEmployees.forEach(e => {
+                if (checkInspectionOverdueStatus(e.eduScoreDate).overdue) overdue++;
+            });
+            const badge = document.getElementById('badge-overdue');
+            if (overdue > 0) {
+                badge.innerText = overdue;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openInspectionUpdateModal(empId) {
+            const emp = masterRawEmployees.find(e => e.id === empId);
+            if (!emp) return;
+
+            activeEditEmployeeIndex = masterRawEmployees.findIndex(e => e.id === empId);
+
+            document.getElementById('modal-employee-name').innerText = emp.fullname;
+            document.getElementById('modal-employee-detail').innerText = `${emp.rank || ''} ${emp.subject ? '(' + emp.subject + ')' : ''} - ${emp.school || ''}`;
+            document.getElementById('modal-input-score').value = emp.eduScore || '';
+            document.getElementById('modal-input-date').value = emp.eduScoreDate || '';
+
+            document.getElementById('update-modal').classList.remove('hidden');
+        }
+
+        function closeUpdateModal() {
+            document.getElementById('update-modal').classList.add('hidden');
+        }
+
+        function saveInspectionUpdate() {
+            if (activeEditEmployeeIndex === -1) return;
+
+            const newScore = document.getElementById('modal-input-score').value;
+            const newDate = document.getElementById('modal-input-date').value;
+
+            masterRawEmployees[activeEditEmployeeIndex].eduScore = newScore;
+            masterRawEmployees[activeEditEmployeeIndex].eduScoreDate = newDate;
+
+            closeUpdateModal();
+            renderViewerTable();
+            updateOverdueBadgeCount();
+
+            alert("تم تحيين النقطة وتاريخ الزيارة التربوية بنجاح!");
+        }
+
+        function exportCurrentViewerDataExcel() {
+            const currentData = getViewerCurrentEmployees();
+            if (currentData.length === 0) {
+                alert("لا توجد بيانات معروضة للتصدير!");
+                return;
+            }
+
+            const exportRows = currentData.map((emp, i) => ({
+                "الرقم": i + 1,
+                "اللقب والاسم": emp.fullname,
+                "الرتبة": emp.rank,
+                "المادة": emp.subject || '',
+                "طبيعة المؤسسة": emp.schoolNature || '',
+                "الدرجة": emp.degree,
+                "المؤسسة": emp.school,
+                "البلدية": emp.municipality,
+                "النقطة التربوية": emp.eduScore,
+                "تاريخ النقطة التربوية": emp.eduScoreDate,
+                "حالة التفتيش": checkInspectionOverdueStatus(emp.eduScoreDate).text
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "المعينين_بالتفتيش");
+            XLSX.writeFile(wb, "تقرير_المتابعة_التفتيشية.xlsx");
         }
     </script>
 </body>
